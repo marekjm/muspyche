@@ -22,13 +22,12 @@ def renderlist(tree, context):
 
 class Tag:
     """Base class for various tags.
-    Inheriting classes must override this all methods.
     """
     def __init__(self):
         pass
 
-    def render(self):
-        return ''
+    def render(self, engine, context):
+        return engine(self).render(context)
 
 
 class Variable(Tag):
@@ -41,9 +40,6 @@ class Variable(Tag):
 
     def getkey(self):
         return self._key
-
-    def render(self, engine, context):
-        return engine(self).render(context=context)
 
 
 class Literal(Variable):
@@ -65,24 +61,18 @@ class Section(Tag):
     def getname(self):
         return self._name
 
-    def render(self, engine, context):
-        return engine(self).render(context)
-
 
 class Inverted(Section):
     """Class represetnting 'Inverted Section' type of Mustache tag.
     """
-    def render(self, engine, context):
-        return engine(self).render(context)
+    pass
+
 
 class Close(Tag):
     """Class representing section closing tag.
     """
     def __init__(self, name):
         self._name = name
-
-    def __repr__(self):
-        return 'Close: {0}'.format(self._name)
 
     def getname(self):
         return self._name
@@ -111,9 +101,6 @@ class TextNode(Tag):
     """
     def __init__(self, text):
         self._text = text
-
-    def render(self, engine, context):
-        return self._text
 
 
 class Partial(Tag):

@@ -1,0 +1,17 @@
+# Ingnore hidden files
+.*
+!.gitignore
+!.gitkeep
+
+
+# Ignore backup files
+*~
+
+
+# Ignore Python intermediate files
+*.py[co]
+__pycache__/
+
+
+# Ignore VIM swap files
+*.swp

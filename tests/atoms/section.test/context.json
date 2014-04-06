@@ -1,0 +1,8 @@
+{
+    "pairs": [
+        {"first": 0, "second": 1},
+        {"first": "a", "second": "b"},
+        {"first": "foo", "second": "bar"},
+        {"first": "Hello", "second": "World"}
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "elements": [
+        {
+            "attrs": [
+                {"name": "foo", "value": "Foo"},
+                {"name": "bar", "value": "Bar"}
+            ]
+        },
+        {
+            "attrs": [
+                {"name": "x", "value": "0"},
+                {"name": "y", "value": "1"},
+                {"name": "z", "value": "2"}
+            ]
+        }
+    ]
+}

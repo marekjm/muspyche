@@ -4,5 +4,13 @@ from . import parser
 from . import renderer
 
 
-def make(temp, ctxt):
+def make(template, context):
+    """This function will *make the template rendered*.
+    It takes two parameters:
+
+    * `template` - a string containing Mustache template,
+    * `context` - a dictionary containing context for given template,
+
+    It returns string containg template rendered against given context.
+    """
     return renderer.render(parser.parse(temp), ctxt)

@@ -73,10 +73,7 @@ class Inverted(Section):
     """Class represetnting 'Inverted Section' type of Mustache tag.
     """
     def render(self, engine, context):
-        s = ''
-        if context == False or context == []: s = renderlist(self._template, context)
-        return s
-
+        return engine(self).render(context)
 
 class Close(Tag):
     """Class representing section closing tag.

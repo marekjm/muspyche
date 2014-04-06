@@ -55,6 +55,16 @@ class SectionEngine:
         return s
 
 
+class InvertedEngine:
+    def __init__(self, element):
+        self._el = element
+
+    def render(self, context):
+        s = ''
+        if context == False or context == []: s = renderlist(self._el._template, context)
+        return s
+
+
 def Engine(element):
     """Factory function for creating rendering engines.
     It accepts a single element as an argument and
@@ -67,6 +77,8 @@ def Engine(element):
         engine = TextNodeEngine
     elif type(element) == Section:
         engine = SectionEngine
+    elif type(element) == Inverted:
+        engine = InvertedEngine
     else:
         raise TypeError('no suitable rendering engine for type {0} found'.format(type(element)))
     return engine

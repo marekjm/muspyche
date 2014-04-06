@@ -34,8 +34,12 @@ class TextNodeEngine(BaseEngine):
 
 
 class SectionEngine(BaseEngine):
+    def _getcontext(self, context):
+        return (context[self._el.getname()] if (self._el.getname() in context) else [])
+
     def render(self, context):
         s = ''
+        context = self._getcontext(context)
         if context == False or context == []:
             pass
         elif type(context) == list and len(context) > 0:
@@ -48,9 +52,10 @@ class SectionEngine(BaseEngine):
         return s
 
 
-class InvertedEngine(BaseEngine):
+class InvertedEngine(SectionEngine):
     def render(self, context):
         s = ''
+        context = self._getcontext(context)
         if context == False or context == []: s = renderlist(self._el._template, context)
         return s
 
@@ -79,10 +84,5 @@ def renderlist(tree, context):
     """
     s = ''
     for el in tree:
-        elrender = ''
-        if type(el) in [Section, Inverted]:
-            elrender = el.render(Engine(el), (context[el.getname()] if (el.getname() in context) else []))
-        else:
-            elrender = el.render(engine=Engine(el), context=context)
-        s += elrender
+        s += el.render(engine=Engine(el), context=context)
     return s

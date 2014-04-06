@@ -119,5 +119,3 @@ def assemble(tree):
 
 def decomment(tree):
     return [el for el in tree if type(el) != Comment]
-
-

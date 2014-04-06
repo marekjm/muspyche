@@ -6,6 +6,8 @@ from .models import *
 
 class BaseEngine:
     """Base class for rendering engines of Muspyche.
+
+    Subclasses must override its render method.
     """
     def __init__(self, element):
         self._el = element
@@ -15,12 +17,9 @@ class BaseEngine:
         return s
 
 
-class VariableEngine:
+class VariableEngine(BaseEngine):
     """Engine used to render variables.
     """
-    def __init__(self, element):
-        self._el = element
-
     def render(self, context):
         s = ''
         if self._el._key not in context and not self._el._miss and self._el._key != '': raise KeyError('`{0}\' cannot be found in current context'.format(self._el._key))
@@ -29,18 +28,12 @@ class VariableEngine:
         return s
 
 
-class TextNodeEngine:
-    def __init__(self, element):
-        self._el = element
-
+class TextNodeEngine(BaseEngine):
     def render(self, context):
-        return self._el
+        return self._el._text
 
 
-class SectionEngine:
-    def __init__(self, element):
-        self._el = element
-
+class SectionEngine(BaseEngine):
     def render(self, context):
         s = ''
         if context == False or context == []:
@@ -55,10 +48,7 @@ class SectionEngine:
         return s
 
 
-class InvertedEngine:
-    def __init__(self, element):
-        self._el = element
-
+class InvertedEngine(BaseEngine):
     def render(self, context):
         s = ''
         if context == False or context == []: s = renderlist(self._el._template, context)

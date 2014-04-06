@@ -37,6 +37,24 @@ class TextNodeEngine:
         return self._el
 
 
+class SectionEngine:
+    def __init__(self, element):
+        self._el = element
+
+    def render(self, context):
+        s = ''
+        if context == False or context == []:
+            pass
+        elif type(context) == list and len(context) > 0:
+            for i in context:
+                s += renderlist(self._el._template, i)
+        elif type(context) == dict:
+            s = renderlist(self._el._template, context)
+        else:
+            raise TypeError('invalid type for context: expected list or dict but got {0}'.format(type(context)))
+        return s
+
+
 def Engine(element):
     """Factory function for creating rendering engines.
     It accepts a single element as an argument and
@@ -47,6 +65,8 @@ def Engine(element):
         engine = VariableEngine
     elif type(element) == TextNode:
         engine = TextNodeEngine
+    elif type(element) == Section:
+        engine = SectionEngine
     else:
         raise TypeError('no suitable rendering engine for type {0} found'.format(type(element)))
     return engine
@@ -59,7 +79,7 @@ def renderlist(tree, context):
     for el in tree:
         elrender = ''
         if type(el) in [Section, Inverted]:
-            elrender = el.render(Engine, (context[el.getname()] if (el.getname() in context) else []))
+            elrender = el.render(Engine(el), (context[el.getname()] if (el.getname() in context) else []))
         else:
             elrender = el.render(engine=Engine(el), context=context)
         s += elrender

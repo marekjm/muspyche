@@ -66,17 +66,7 @@ class Section(Tag):
         return self._name
 
     def render(self, engine, context):
-        s = ''
-        if context == False or context == []:
-            pass
-        elif type(context) == list and len(context) > 0:
-            for i in context:
-                s += renderlist(self._template, i)
-        elif type(context) == dict:
-            s = (self._template if type(self._template) == str else renderlist(self._template, context))
-        else:
-            raise TypeError('invalid type for context: expected list or dict but got {0}'.format(type(context)))
-        return s
+        return engine(self).render(context)
 
 
 class Inverted(Section):

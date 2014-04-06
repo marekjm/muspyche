@@ -3,6 +3,9 @@ import os
 import re
 
 
+DEBUG = False
+
+
 class Tag:
     """Base class for various tags.
     Inheriting classes must override this all methods.
@@ -29,7 +32,7 @@ class Variable(Tag):
         s = ''
         if self._key not in context and not self._miss and self._key != '': raise KeyError('`{0}\' cannot be found in current context'.format(self._key))
         if self._key: s = (context[self._key] if self._key in context else '')
-        if self._escaped: s = html.escape(s)
+        if self._escaped: s = html.escape(str(s))
         return s
 
 
@@ -53,22 +56,22 @@ class Section(Tag):
         return self._name
 
     def render(self, context):
-        print('context for section {0}: {1}'.format(self._name, context))
+        if DEBUG: print('context for section {0}: {1}'.format(self._name, context))
         s = ''
         if context == False or context == []:
-            print('context is empty')
+            if DEBUG: print('context is empty')
             pass
         elif type(context) == list and len(context) > 0:
-            print('context is a list')
+            if DEBUG: print('context is a list')
             for i in context:
-                print('  subcontext for section {0}:'.format(self._name), i)
+                if DEBUG: print('  subcontext for section {0}:'.format(self._name), i)
                 s += renderlist(self._template, i)
         elif type(context) == dict:
-            print('context is single dict')
+            if DEBUG: print('context is single dict')
             s = (self._template if type(self._template) == str else renderlist(self._template, context))
         else:
             raise TypeError('invalid type for context: expected list or dict but got {0}'.format(type(context)))
-        print('rendered:', repr(s))
+        if DEBUG: print('rendered:', repr(s))
         return s
 
 
@@ -351,7 +354,7 @@ class Parser:
         raise Exception("Invalid symbol for section tag: %s" % repr(tag_type))
 
 
-def parse(template, delimiters=('{{', '}}')):
+def parsex(template, delimiters=('{{', '}}')):
     """
     Parse a unicode template string and return a ParsedTemplate instance.
 
@@ -376,7 +379,6 @@ def parse(template, delimiters=('{{', '}}')):
         if type(i) == str: finalized.append( TextNode(i) )
         else: finalized.append(i)
     return finalized
-
 
 def gettag(s):
     """Returns a tuple: (tag-type, tag-name, whole-match).
@@ -447,27 +449,27 @@ def _getWrapHead(tree):
 def _wrap(tree, debug_prefix=''):
     wrapper, name, tree = _getWrapHead(tree)
     sprefix = debug_prefix + ('^' if wrapper == Inverted else '#') + name + ':'
-    print('{0} started wrapping (wrapper: {1})'.format(sprefix, wrapper))
+    if DEBUG: print('{0} started wrapping (wrapper: {1})'.format(sprefix, wrapper))
     n, wrapped = (0, [])
     while n < len(tree):
         el = tree[n]
         prefix = '{0} {1}:'.format(sprefix, n)
         i = 1
         if type(el) in (Section, Inverted):
-            print(prefix, 'nested {0} with key {1}'.format(str(type(el))[8:-2], el.getname()))
+            if DEBUG: print(prefix, 'nested {0} with key {1}'.format(str(type(el))[8:-2], el.getname()))
             i, part = _wrap(tree[n:], debug_prefix=(prefix+' -> '))
-            print(prefix, 'jump is {0} and will land at element {1}'.format(i, tree[n+i]))
+            if DEBUG: print(prefix, 'jump is {0} and will land at element {1}'.format(i, tree[n+i]))
         else:
-            print(prefix, 'appending element {0} to wrapped list'.format(el))
+            if DEBUG: print(prefix, 'appending element {0} to wrapped list'.format(el))
             part = el
         wrapped.append(part)
         n += i
         last = wrapped[-1]
         if type(last) == Close and last.getname() == name:
-            print(prefix, 'closing after {0} elements(s)'.format(n))
+            if DEBUG: print(prefix, 'closing after {0} elements(s)'.format(n))
             n += 1
             break
-    print('{0} finished wrapping'.format(sprefix))
+    if DEBUG: print('{0} finished wrapping'.format(sprefix))
     return (n, wrapper(name, wrapped[:-1]))
 
 def assemble(tree):

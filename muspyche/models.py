@@ -42,12 +42,8 @@ class Variable(Tag):
     def getkey(self):
         return self._key
 
-    def render(self, context):
-        s = ''
-        if self._key not in context and not self._miss and self._key != '': raise KeyError('`{0}\' cannot be found in current context'.format(self._key))
-        if self._key: s = (context[self._key] if self._key in context else '')
-        if self._escaped: s = html.escape(str(s))
-        return s
+    def render(self, engine, context):
+        return engine(self).render(context=context)
 
 
 class Literal(Variable):
@@ -70,8 +66,6 @@ class Section(Tag):
         return self._name
 
     def render(self, engine, context):
-        return engine(self).render(context)
-        """
         s = ''
         if context == False or context == []:
             pass
@@ -83,7 +77,6 @@ class Section(Tag):
         else:
             raise TypeError('invalid type for context: expected list or dict but got {0}'.format(type(context)))
         return s
-        """
 
 
 class Inverted(Section):
@@ -132,7 +125,7 @@ class TextNode(Tag):
     def __init__(self, text):
         self._text = text
 
-    def render(self, context):
+    def render(self, engine, context):
         return self._text
 
 

@@ -3,6 +3,7 @@
 import difflib
 import json
 import os
+import sys
 
 import muspyche
 
@@ -16,6 +17,7 @@ template = muspyche.util.read(os.path.join(td, 'template.mustache'))
 
 actual = muspyche.make(template, context)
 
+if '--verbose' in sys.argv: print(actual, end='')
 
 [print(line) for line in difflib.unified_diff(expected.splitlines(), actual.splitlines(), fromfile='expected', tofile='actual')]
 

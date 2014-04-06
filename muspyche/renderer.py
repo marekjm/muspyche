@@ -44,9 +44,9 @@ class SectionEngine(BaseEngine):
             pass
         elif type(context) == list and len(context) > 0:
             for i in context:
-                s += renderlist(self._el._template, i)
+                s += render(self._el._template, i)
         elif type(context) == dict:
-            s = renderlist(self._el._template, context)
+            s = render(self._el._template, context)
         else:
             raise TypeError('invalid type for context: expected list or dict but got {0}'.format(type(context)))
         return s
@@ -56,7 +56,7 @@ class InvertedEngine(SectionEngine):
     def render(self, context):
         s = ''
         context = self._getcontext(context)
-        if context == False or context == []: s = renderlist(self._el._template, context)
+        if context == False or context == []: s = render(self._el._template, context)
         return s
 
 
@@ -79,7 +79,7 @@ def Engine(element):
     return engine
 
 
-def renderlist(tree, context):
+def render(tree, context):
     """Renders string from raw list of nodes.
     """
     s = ''

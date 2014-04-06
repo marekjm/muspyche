@@ -22,7 +22,7 @@ def gettag(s):
     if match is None: raise Exception(s)
     return (match.group(1), match.group(2), match.group(0))
 
-def quickparse(template, delimiters=('{{', '}}')):
+def rawparse(template, delimiters=('{{', '}}')):
     types = {'':  Variable,
              '~': Negated,
              '!': Comment,
@@ -119,3 +119,6 @@ def assemble(tree):
 
 def decomment(tree):
     return [el for el in tree if type(el) != Comment]
+
+def parse(template):
+    return assemble(decomment(rawparse(template)))

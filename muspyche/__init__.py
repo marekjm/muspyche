@@ -13,4 +13,4 @@ def make(template, context):
 
     It returns string containg template rendered against given context.
     """
-    return renderer.render(parser.parse(temp), ctxt)
+    return renderer.render(parser.parse(template), context)

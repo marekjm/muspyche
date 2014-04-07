@@ -4,7 +4,7 @@ from . import parser
 from . import renderer
 
 
-def make(template, context):
+def make(template, context, lookup=[]):
     """This function will *make the template rendered*.
     It takes two parameters:
 
@@ -13,4 +13,4 @@ def make(template, context):
 
     It returns string containg template rendered against given context.
     """
-    return renderer.render(parser.parse(template), context)
+    return renderer.render(parser.parse(template, lookup), context)

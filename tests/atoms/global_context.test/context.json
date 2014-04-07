@@ -1,0 +1,9 @@
+{
+    "home": "../../",
+    "css": [
+        {"source": "data/css/style.css"},
+        {"source": "data/css/text.css"},
+        {"source": "data/css/fonts.css"},
+        {"source": "data/css/background.css"}
+    ]
+}

@@ -9,8 +9,8 @@ import html
 class Tag:
     """Base class for various tags.
     """
-    def __init__(self):
-        pass
+    def __init__(self, key):
+        self._key = key
 
     def render(self, engine, context):
         return engine(self).render(context)
@@ -94,3 +94,6 @@ class Partial(Tag):
     """
     def __init__(self, path):
         self._path = path
+
+    def getpath(self):
+        return self._path

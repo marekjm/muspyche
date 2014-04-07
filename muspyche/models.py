@@ -12,8 +12,9 @@ class Tag:
     def __init__(self, key):
         self._key = key
 
-    def render(self, engine, context):
-        return engine(self).render(context)
+    def render(self, engine, context, global_context=None):
+        if global_context is None: global_context = context
+        return engine(self).render(context, global_context)
 
 
 class Variable(Tag):

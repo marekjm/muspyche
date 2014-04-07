@@ -12,7 +12,13 @@ class BaseEngine:
     def __init__(self, element):
         self._el = element
 
-    def render(self, context):
+    def render(self, context, global_context):
+        """Template .render() method for rendering engines.
+
+        All methods overriding this one in subclasses must accept
+        `context` and `global_context` parameters, both of which are dictionaries
+        containing contexts.
+        """
         s = ''
         return s
 
@@ -20,16 +26,21 @@ class BaseEngine:
 class VariableEngine(BaseEngine):
     """Engine used to render variables.
     """
-    def render(self, context):
+    def render(self, context, global_context):
         s = ''
-        if self._el._key not in context and not self._el._miss and self._el._key != '': raise KeyError('`{0}\' cannot be found in current context'.format(self._el._key))
-        if self._el._key: s = (context[self._el._key] if self._el._key in context else '')
+        current_context = context
+        key = self._el._key
+        if key.startswith('::'):
+            key = key[2:]
+            current_context = global_context
+        if key not in current_context and not self._el._miss and key != '': raise KeyError('`{0}\' cannot be found in current context'.format(key))
+        if key: s = (current_context[key] if key in current_context else '')
         if self._el._escaped: s = html.escape(str(s))
         return s
 
 
 class TextNodeEngine(BaseEngine):
-    def render(self, context):
+    def render(self, context, global_context=None):
         return self._el._text
 
 
@@ -37,23 +48,23 @@ class SectionEngine(BaseEngine):
     def _getcontext(self, context):
         return (context[self._el.getname()] if (self._el.getname() in context) else [])
 
-    def render(self, context):
+    def render(self, context, global_context):
         s = ''
         context = self._getcontext(context)
         if context == False or context == []:
             pass
         elif type(context) == list and len(context) > 0:
             for i in context:
-                s += render(self._el._template, i)
+                s += render(self._el._template, i, global_context)
         elif type(context) == dict:
-            s = render(self._el._template, context)
+            s = render(self._el._template, context, global_context)
         else:
             raise TypeError('invalid type for context: expected list or dict but got {0}'.format(type(context)))
         return s
 
 
 class InvertedEngine(SectionEngine):
-    def render(self, context):
+    def render(self, context, global_context):
         s = ''
         context = self._getcontext(context)
         if context == False or context == []: s = render(self._el._template, context)
@@ -63,7 +74,7 @@ class InvertedEngine(SectionEngine):
 class PartialEngine(BaseEngine):
     """Engine used to render partials.
     """
-    def render(self, context):
+    def render(self, context, global_context):
         s = ''
         return s
 
@@ -89,10 +100,10 @@ def Engine(element):
     return engine
 
 
-def render(tree, context):
+def render(tree, context, global_context=None):
     """Renders string from raw list of nodes.
     """
     s = ''
     for el in tree:
-        s += el.render(engine=Engine(el), context=context)
+        s += el.render(engine=Engine(el), context=context, global_context=global_context)
     return s

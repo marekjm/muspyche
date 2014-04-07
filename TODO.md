@@ -9,7 +9,6 @@
 
 ### Mustache features
 
-- implement partials,
 - fix bug that causes comments containg `}}` string to be incorrectly parsed,
 
 ----

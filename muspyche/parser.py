@@ -3,6 +3,7 @@ import re
 
 
 from .models import *
+from . import util
 
 
 DEBUG = False
@@ -68,6 +69,44 @@ def rawparse(template, delimiters=('{{', '}}')):
         text = ''
     return tree
 
+def _resolvepartial(element, lookup):
+    """This function tries to find a file matching given partial path and
+    return it as a parsed list.
+    """
+    path, found = element.getpath(), True
+    if not os.path.isfile(path):
+        found = False
+        if os.path.isfile('.'.join([path, 'mustache'])):
+            path = '.'.join([path, 'mustache'])
+            found = True
+    if not found:
+        for base in lookup:
+            trypath = os.path.join(base, path)
+            if os.path.isfile(trypath):
+                path = trypath
+                found = True
+                break
+            trypath = '.'.join([os.path.join(base, path), 'mustache'])
+            if os.path.isfile(trypath):
+                path = trypath
+                found = True
+                break
+    if not found:
+        raise OSError('partial cannot be resolved: invalid path: {0}'.format(path))
+    template = util.read(path)
+    return parse(template, lookup)
+
+def expand(tree, lookup=[]):
+    """This function expands partials.
+    """
+    expanded = []
+    for el in tree:
+        if type(el) == Partial:
+            expanded.extend(_resolvepartial(el, lookup))
+        else:
+            expanded.append(el)
+    return expanded
+
 def _getWrapHead(tree):
     wrapper, name = None, ''
     name = tree[0].getname()
@@ -120,5 +159,5 @@ def assemble(tree):
 def decomment(tree):
     return [el for el in tree if type(el) != Comment]
 
-def parse(template):
-    return assemble(decomment(rawparse(template)))
+def parse(template, lookup=[]):
+    return assemble(decomment(expand(rawparse(template), lookup)))

@@ -60,6 +60,14 @@ class InvertedEngine(SectionEngine):
         return s
 
 
+class PartialEngine(BaseEngine):
+    """Engine used to render partials.
+    """
+    def render(self, context):
+        s = ''
+        return s
+
+
 def Engine(element):
     """Factory function for creating rendering engines.
     It accepts a single element as an argument and
@@ -74,6 +82,8 @@ def Engine(element):
         engine = SectionEngine
     elif type(element) == Inverted:
         engine = InvertedEngine
+    elif type(element) == Partial:
+        engine = PartialEngine
     else:
         raise TypeError('no suitable rendering engine for type {0} found'.format(type(element)))
     return engine

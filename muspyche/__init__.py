@@ -4,6 +4,9 @@ from . import parser
 from . import renderer
 
 
+__version__ = '0.0.1'
+
+
 def make(template, context, lookup=[]):
     """This function will *make the template rendered*.
     It takes two parameters:

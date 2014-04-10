@@ -84,45 +84,48 @@ def _resolvepartial(element, lookup, missing):
     `lookup`: list[str]
         This is a list of directories which Muspyche will check when looking for partials that
         were not found in '.' directory.
-        Searching will stop after first successful match.
 
     `missing`: bool
         Specify whether to allow missing partials (true) or not (false).
         If allowed, missing partials are represented by empty string.
         If not missing partials are not allowed and a partial cannot be found
         an exception is raised.
+
+    Lookup sequence:
+
+    Let given path be named `partial_path`, and current lookup path be named `lookup_path`.
+    First lookup path is always '.' - current working directory.
+    The sequence consists of following steps and is repeated for every lookup path:
+
+        0.  lookup_path/partial_path
+        1.  lookup_path/partial_path.mustache
+        2.  lookup_path/partial_path/template.mustache
+
+    Iterating over lookup paths stops after first match is found.
     """
+    lookup.insert(0, '.')
     print('lookup:', lookup)
     path, found = element.getpath(), True
     print('?', path)
-    if not os.path.isfile(path):
-        found = False
-        if os.path.isfile('.'.join([path, 'mustache'])):
-            path = '.'.join([path, 'mustache'])
+    for base in lookup:
+        trypath = os.path.join(base, path)
+        print('??', trypath)
+        if os.path.isfile(trypath):
+            path = trypath
             found = True
-        if os.path.isfile(os.path.join(path, 'template.mustache')):
-            path = os.path.join(path, 'template.mustache')
+            break
+        trypath = '.'.join([os.path.join(base, path), 'mustache'])
+        print('??', trypath)
+        if os.path.isfile(trypath):
+            path = trypath
             found = True
-    if not found:
-        for base in lookup:
-            trypath = os.path.join(base, path)
-            print('??', trypath)
-            if os.path.isfile(trypath):
-                path = trypath
-                found = True
-                break
-            trypath = '.'.join([os.path.join(base, path), 'mustache'])
-            print('??', trypath)
-            if os.path.isfile(trypath):
-                path = trypath
-                found = True
-                break
-            trypath = os.path.join(base, path, 'template.mustache')
-            print('??', trypath)
-            if os.path.isfile(trypath):
-                path = trypath
-                found = True
-                break
+            break
+        trypath = os.path.join(base, path, 'template.mustache')
+        print('??', trypath)
+        if os.path.isfile(trypath):
+            path = trypath
+            found = True
+            break
     print(':', path)
     if not found and not missing:
         raise OSError('partial cannot be resolved: invalid path: {0}'.format(path))

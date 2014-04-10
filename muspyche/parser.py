@@ -23,7 +23,9 @@ def gettag(s):
     if match is None: raise Exception(s)
     return (match.group(1), match.group(2), match.group(0))
 
-def rawparse(template, delimiters=('{{', '}}')):
+def rawparse(template):
+    """Split template into a list of nodes.
+    """
     types = {'':  Variable,
              '~': Negated,
              '!': Comment,
@@ -42,7 +44,7 @@ def rawparse(template, delimiters=('{{', '}}')):
         if i+3 >= len(template): # this means template cannot include even one tag so there's no need for parsing
             text += template[i:]
             break
-        if template[i:i+2] == delimiters[0]:
+        if template[i:i+2] == '{{':
             if text:
                 tree.append( TextNode(text) )
                 text = ''
@@ -69,40 +71,76 @@ def rawparse(template, delimiters=('{{', '}}')):
         text = ''
     return tree
 
-def _resolvepartial(element, lookup):
+def _resolvepartial(element, lookup, missing):
     """This function tries to find a file matching given partial path and
     return it as a parsed list.
+
+    :param element: objcet representing Mustache partial element
+    :param lookup: list of directories in which lookup for partials should be done
+    :param missing: whether to allow missing partials or not
+
+    Params explained:
+
+    `lookup`: list[str]
+        This is a list of directories which Muspyche will check when looking for partials that
+        were not found in '.' directory.
+        Searching will stop after first successful match.
+
+    `missing`: bool
+        Specify whether to allow missing partials (true) or not (false).
+        If allowed, missing partials are represented by empty string.
+        If not missing partials are not allowed and a partial cannot be found
+        an exception is raised.
     """
+    print('lookup:', lookup)
     path, found = element.getpath(), True
+    print('?', path)
     if not os.path.isfile(path):
         found = False
         if os.path.isfile('.'.join([path, 'mustache'])):
             path = '.'.join([path, 'mustache'])
             found = True
+        if os.path.isfile(os.path.join(path, 'template.mustache')):
+            path = os.path.join(path, 'template.mustache')
+            found = True
     if not found:
         for base in lookup:
             trypath = os.path.join(base, path)
+            print('??', trypath)
             if os.path.isfile(trypath):
                 path = trypath
                 found = True
                 break
             trypath = '.'.join([os.path.join(base, path), 'mustache'])
+            print('??', trypath)
             if os.path.isfile(trypath):
                 path = trypath
                 found = True
                 break
-    if not found:
+            trypath = os.path.join(base, path, 'template.mustache')
+            print('??', trypath)
+            if os.path.isfile(trypath):
+                path = trypath
+                found = True
+                break
+    print(':', path)
+    if not found and not missing:
         raise OSError('partial cannot be resolved: invalid path: {0}'.format(path))
-    template = util.read(path)
-    return parse(template, lookup)
+    if found: template = util.read(path)
+    else: template = ''
+    return expandpartials(rawparse(template), lookup, missing)
 
-def expand(tree, lookup=[]):
+def expandpartials(tree, lookup=[], missing=False):
     """This function expands partials.
+
+    :param tree: parse tree of Mustache nodes
+    :param lookup: list of directories in which lookup for partials should be done
+    :param missing: whether to allow missing partials or not
     """
     expanded = []
     for el in tree:
         if type(el) == Partial:
-            expanded.extend(_resolvepartial(el, lookup))
+            expanded.extend(_resolvepartial(el, lookup, missing))
         else:
             expanded.append(el)
     return expanded
@@ -160,4 +198,4 @@ def decomment(tree):
     return [el for el in tree if type(el) != Comment]
 
 def parse(template, lookup=[]):
-    return assemble(decomment(expand(rawparse(template), lookup)))
+    return assemble(decomment(expandpartials(rawparse(template), lookup)))

@@ -1,0 +1,8 @@
+{
+    "foo": {
+        "bar": "Hello World!"
+    },
+    "in_section": [
+        {}
+    ]
+}

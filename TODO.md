@@ -16,6 +16,6 @@
 ### Mustache 2.0 features
 
 - implement dot notation for accessing nested variables,
-- implement access to global scope,
+- implement access to global scope (partly finished, is supported for variables inside sections),
 - implement *else* notation (section-inverted-close),
-- implement negated variables ({{~foo}} Some code {{/foo}}),
+- implement negated variables (`{{~foo}} Some code {{/foo}}`),

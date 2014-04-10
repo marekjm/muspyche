@@ -71,11 +71,11 @@ def rawparse(template):
         text = ''
     return tree
 
-def _resolvepartial(element, lookup, missing):
-    """This function tries to find a file matching given partial path and
-    return it as a parsed list.
+def _findpath(partial, lookup, missing):
+    """This function tries to find a file matching given partial name and
+    return path to it.
 
-    :param element: objcet representing Mustache partial element
+    :param partial: name of the partial given in template
     :param lookup: list of directories in which lookup for partials should be done
     :param missing: whether to allow missing partials or not
 
@@ -103,32 +103,37 @@ def _resolvepartial(element, lookup, missing):
 
     Iterating over lookup paths stops after first match is found.
     """
+    found, path = (False, partial)
     lookup.insert(0, '.')
-    print('lookup:', lookup)
-    path, found = element.getpath(), True
-    print('?', path)
     for base in lookup:
         trypath = os.path.join(base, path)
-        print('??', trypath)
         if os.path.isfile(trypath):
             path = trypath
             found = True
             break
         trypath = '.'.join([os.path.join(base, path), 'mustache'])
-        print('??', trypath)
         if os.path.isfile(trypath):
             path = trypath
             found = True
             break
         trypath = os.path.join(base, path, 'template.mustache')
-        print('??', trypath)
         if os.path.isfile(trypath):
             path = trypath
             found = True
             break
-    print(':', path)
     if not found and not missing:
         raise OSError('partial cannot be resolved: invalid path: {0}'.format(path))
+    return (found, path)
+
+def _resolvepartial(element, lookup, missing):
+    """This function tries to find a file matching given partial path and
+    return it as a parsed list.
+
+    :param element: object representing Mustache partial element
+    :param lookup: list of directories in which lookup for partials should be done
+    :param missing: whether to allow missing partials or not
+    """
+    found, path = _findpath(element.getpath(), lookup, missing)
     if found: template = util.read(path)
     else: template = ''
     return expandpartials(rawparse(template), lookup, missing)

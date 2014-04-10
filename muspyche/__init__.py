@@ -16,4 +16,4 @@ def make(template, context, lookup=[]):
 
     It returns string containg template rendered against given context.
     """
-    return renderer.render(parser.parse(template, lookup), context)
+    return renderer.render(parser.parse(template, lookup), context, context)

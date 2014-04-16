@@ -37,9 +37,7 @@ class VariableEngine(BaseEngine):
             keyparts = key.split('.')
             key = keyparts.pop(-1)
             for part in keyparts:
-                print(current_context, part, end=' -> ')
                 current_context = current_context[part]
-                print(current_context)
         if key not in current_context and not self._el._miss and key != '': raise KeyError('`{0}\' cannot be found in current context'.format(key))
         if key: s = (current_context[key] if key in current_context else '')
         if self._el._escaped: s = html.escape(str(s))

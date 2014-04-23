@@ -26,56 +26,6 @@
 
 ### Extended features
 
-**Uber- or meta-templates**
-
-> TODO: description
-
-Steps:
-
-- create a way to make writing meta-templates (or maybe *uber-*?) - which could be used as a templates for templates - possible,
-- implement hook-syntax: `{{@hook}}` - this token would be substituted with *injections*,
-- implement injection-syntax (a.k.a. *reverse partial* syntax): `{{<uber:hook}}` (opening), `{{~uber:hook}}`;
-  this will read template `uber`, replace hook `hook` inside it with what was between injection tags, insert actual injection tokens as subtitute for tokens describing injection,
-
-Behaviour:
-
-template: `uber`
-
-```
-print("{{@text}}")
-```
-
-template: `main`
-
-```
-#!/usr/bin/python3
-
-{{<uber:text}} {{string}} {{~uber:text}}
-```
-
-context for `main`: `{"string": "Hello World!"}`
-
-Template `main` is being parsed.  
-Expected outcome:
-
-- as a dumped template, with the unnecessary whitespace not stripped):
-
-```
-#!/usr/bin/python3
-
-print(" {{string}} ")
-
-```
-
-- as a rendered text:
-
-```
-#!/usr/bin/python3
-
-print(" Hello World! ")
-
-```
-
 
 ----
 

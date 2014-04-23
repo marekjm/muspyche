@@ -100,6 +100,8 @@ def Engine(element):
         engine = InvertedEngine
     elif type(element) == Partial:
         engine = PartialEngine
+    elif type(element) == Injection:
+        engine = InjectionEngine
     else:
         raise TypeError('no suitable rendering engine for type {0} found'.format(type(element)))
     return engine

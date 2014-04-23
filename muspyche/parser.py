@@ -14,7 +14,7 @@ def gettag(s):
     Searches from the very beginning of given string.
     """
     literal = re.compile('^({)(.*?)}}}').search(s)
-    normal = re.compile('^([~&#^/>]?)(.*?)}}').search(s)
+    normal = re.compile('^([@&#^/<>]?)(.*?)}}').search(s)
     comment = re.compile('^(!)(.*?)(.*\n)*}}').search(s)
     if comment is not None: match = comment
     elif literal is not None: match = literal
@@ -27,7 +27,6 @@ def rawparse(template):
     """Split template into a list of nodes.
     """
     types = {'':  Variable,
-             '~': Negated,
              '!': Comment,
              '{': Literal,
              '&': Literal,
@@ -35,6 +34,8 @@ def rawparse(template):
              '^': Inverted,
              '/': Close,
              '>': Partial,
+             '<': Injection,
+             '@': Hook,
              }
     tree = []
     text = ''
@@ -56,8 +57,8 @@ def rawparse(template):
                 tree.append( Section(tagname.strip(), []) )
             elif tagtype == '^':
                 tree.append( Inverted(tagname.strip(), []) )
-            elif tagtype == '~':
-                tree.append( Negated(tagname.strip(), []) )
+            elif tagtype == '<':
+                tree.append( Injection(tagname.strip(), []) )
             elif tagtype == '/':
                 tree.append( Close(tagname.strip()) )
             else:
@@ -72,10 +73,10 @@ def rawparse(template):
     return tree
 
 def _findpath(partial, lookup, missing):
-    """This function tries to find a file matching given partial name and
+    """This function tries to find a file matching given partial or injection name and
     return path to it.
 
-    :param partial: name of the partial given in template
+    :param partial: name of the partial or injection given in template
     :param lookup: list of directories in which lookup for partials should be done
     :param missing: whether to allow missing partials or not
 
@@ -122,7 +123,7 @@ def _findpath(partial, lookup, missing):
             found = True
             break
     if not found and not missing:
-        raise OSError('partial cannot be resolved: invalid path: {0}'.format(path))
+        raise OSError('partial or injection could not be resolved: invalid path: {0}'.format(path))
     return (found, path)
 
 def _resolvepartial(element, lookup, missing):
@@ -152,6 +153,47 @@ def expandpartials(tree, lookup=[], missing=False):
         else:
             expanded.append(el)
     return expanded
+
+def _resolveinjection(element, lookup, missing):
+    """This function tries to find a file matching given partial path and
+    return it as a parsed list.
+
+    :param element: object representing Mustache partial element
+    :param lookup: list of directories in which lookup for partials should be done
+    :param missing: whether to allow missing partials or not
+    """
+    found, path = _findpath(element.getpath(), lookup, missing)
+    if found: template = util.read(path)
+    else: template = ''
+    return insertinjections(rawparse(template), lookup, missing)
+
+def substituteHooks(tree, hook, tmplt):
+    """Substitues hook with template.
+    """
+    new = []
+    for i in tree:
+        if type(i) == Hook and i.getname() == hook:
+            new.extend(tmplt)
+        else:
+            new.append(i)
+    return new
+
+def insertinjections(tree, lookup=[], missing=False):
+    """This function expands partials.
+
+    :param tree: parse tree of Mustache nodes
+    :param lookup: list of directories in which lookup for partials should be done
+    :param missing: whether to allow missing partials or not
+    """
+    inserted = []
+    for el in tree:
+        if type(el) == Injection:
+            injection = _resolveinjection(el, lookup, missing)
+            injection = substituteHooks(injection, el.gethookname(), el._template)
+            inserted.extend(injection)
+        else:
+            inserted.append(el)
+    return inserted
 
 def _getWrapHead(tree):
     wrapper, name = None, ''
@@ -193,7 +235,7 @@ def assemble(tree):
     i = 0
     while i < len(tree):
         el = tree[i]
-        if type(el) in [Section, Inverted]:
+        if type(el) in [Section, Inverted, Injection]:
             n, part = _wrap(tree[i:])
         else:
             part = el
@@ -206,4 +248,4 @@ def decomment(tree):
     return [el for el in tree if type(el) != Comment]
 
 def parse(template, lookup=[]):
-    return assemble(decomment(expandpartials(rawparse(template), lookup)))
+    return assemble(insertinjections(assemble(expandpartials(decomment(rawparse(template)), lookup)), lookup))

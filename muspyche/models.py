@@ -55,6 +55,19 @@ class Inverted(Section):
     pass
 
 
+class Injection(Section):
+    """Class representing 'Section' type of Mustache tag.
+    """
+    def getname(self):
+        return self._name
+
+    def getpath(self):
+        return self._name.split(':', 1)[0]
+
+    def gethookname(self):
+        return self._name.split(':', 1)[1]
+
+
 class Close(Tag):
     """Class representing section closing tag.
     """
@@ -66,14 +79,6 @@ class Close(Tag):
 
     def render(self, context):
         return ''
-
-
-class Negated(Section):
-    """Class representing 'Negated' (think about it as 'inverted variable') type of Mustache tag.
-    Note that this feature is non-standard and
-    is not described in official Mustache spec.
-    """
-    pass
 
 
 class Comment(Tag):
@@ -98,3 +103,10 @@ class Partial(Tag):
 
     def getpath(self):
         return self._path
+
+
+class Hook(Tag):
+    """Class representing hook for injections.
+    """
+    def getname(self):
+        return self._key

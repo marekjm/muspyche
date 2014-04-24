@@ -248,4 +248,9 @@ def decomment(tree):
     return [el for el in tree if type(el) != Comment]
 
 def parse(template, lookup=[]):
-    return assemble(insertinjections(assemble(expandpartials(decomment(rawparse(template)), lookup)), lookup))
+    curr = rawparse(template)
+    curr = decomment(curr)
+    curr = expandpartials(curr, lookup)
+    curr = assemble(curr)
+    curr = insertinjections(curr, lookup)
+    return curr

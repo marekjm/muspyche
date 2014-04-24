@@ -15,7 +15,7 @@ expected = muspyche.util.read(os.path.join(td, 'expected.txt'))
 context = json.loads(muspyche.util.read(os.path.join(td, 'context.json')))
 template = muspyche.util.read(os.path.join(td, 'template.mustache'))
 
-actual = muspyche.make(template, context, lookup=[td])
+actual = muspyche.api.make(template, context, lookup=[td])
 
 if '--verbose' in sys.argv: print(actual, end='')
 

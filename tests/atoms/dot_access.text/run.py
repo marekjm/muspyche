@@ -17,7 +17,7 @@ template = muspyche.util.read(os.path.join(td, 'template.mustache'))
 
 print(muspyche.parser.parse(template))
 
-actual = muspyche.make(template, context, lookup=[td])
+actual = muspyche.api.make(template, context, lookup=[td])
 
 if '--verbose' in sys.argv: print(actual, end='')
 

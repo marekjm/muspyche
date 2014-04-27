@@ -6,7 +6,7 @@ from .models import *
 from . import util
 
 
-DEBUG = False
+DEBUG = 0
 
 
 def gettag(s):
@@ -198,34 +198,38 @@ def insertinjections(tree, lookup=[], missing=False):
 def _getWrapHead(tree):
     wrapper, name = None, ''
     name = tree[0].getname()
-    wrapper = type(tree.pop(0))
-    return (wrapper, name, tree)
+    origin = tree.pop(0)
+    wrapper = type(origin)
+    return (wrapper, origin, name, tree)
 
 def _wrap(tree, debug_prefix=''):
-    wrapper, name, tree = _getWrapHead(tree)
+    wrapper, origin, name, tree = _getWrapHead(tree)
     sprefix = debug_prefix + ('^' if wrapper == Inverted else '#') + name + ':'
     if DEBUG: print('{0} started wrapping (wrapper: {1})'.format(sprefix, wrapper))
     n, wrapped = (0, [])
+    closed = False
     while n < len(tree):
         el = tree[n]
         prefix = '{0} {1}:'.format(sprefix, n)
         i = 1
         if type(el) in (Section, Inverted):
-            if DEBUG: print(prefix, 'nested {0} with key {1}'.format(str(type(el))[8:-2], el.getname()))
             i, part = _wrap(tree[n:], debug_prefix=(prefix+' -> '))
-            if DEBUG: print(prefix, 'jump is {0} and will land at element {1}'.format(i, tree[n+i]))
         else:
-            if DEBUG: print(prefix, 'appending element {0} to wrapped list'.format(el))
             part = el
         wrapped.append(part)
         n += i
         last = wrapped[-1]
         if type(last) == Close and last.getname() == name:
             if DEBUG: print(prefix, 'closing after {0} elements(s)'.format(n))
+            closed = True
             n += 1
             break
     if DEBUG: print('{0} finished wrapping'.format(sprefix))
-    return (n, wrapper(name, wrapped[:-1]))
+    if closed:
+        final = (n, wrapper(name, wrapped[:-1]))
+    else:
+        final = (1, origin)
+    return final
 
 def assemble(tree):
     """Returns assembled tree.
@@ -249,8 +253,12 @@ def decomment(tree):
 
 def parse(template, lookup=[]):
     curr = rawparse(template)
+    # TODO: loop the hell outta this shit, to enable partials inside injections inside injections inside partials inside injections!
     curr = decomment(curr)
     curr = expandpartials(curr, lookup)
     curr = assemble(curr)
     curr = insertinjections(curr, lookup)
+    curr = decomment(curr)
+    curr = expandpartials(curr, lookup)
+    curr = assemble(curr)
     return curr

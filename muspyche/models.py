@@ -44,6 +44,7 @@ class Section(Tag):
     def __init__(self, name, tmplt, *args):
         self._name = name
         self._template = tmplt
+        self.assembled = False
 
     def getname(self):
         return self._name

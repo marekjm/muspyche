@@ -253,12 +253,16 @@ def decomment(tree):
 
 def parse(template, lookup=[]):
     curr = rawparse(template)
-    # TODO: loop the hell outta this shit, to enable partials inside injections inside injections inside partials inside injections!
-    curr = decomment(curr)
-    curr = expandpartials(curr, lookup)
-    curr = assemble(curr)
-    curr = insertinjections(curr, lookup)
-    curr = decomment(curr)
-    curr = expandpartials(curr, lookup)
-    curr = assemble(curr)
-    return curr
+    final = []
+    while True:
+        next = expandpartials(curr, lookup)
+        next = decomment(next)
+        next = assemble(next)
+        next = insertinjections(next, lookup)
+        next = assemble(next)
+        next = decomment(next)
+        if curr == next:
+            final = next
+            break
+        curr = next
+    return final

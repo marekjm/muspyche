@@ -40,6 +40,7 @@ class VariableEngine(BaseEngine):
                 current_context = current_context[part]
         if key not in current_context and not self._el._miss and key != '': raise KeyError('`{0}\' cannot be found in current context'.format(key))
         if key: s = (current_context[key] if key in current_context else '')
+        if type(s) is not str: s = str(s)
         if self._el._escaped: s = html.escape(str(s))
         return s
 

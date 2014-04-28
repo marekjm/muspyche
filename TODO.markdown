@@ -2,9 +2,20 @@
 
 ### General
 
+In general, major refactoring is needed to once again achieve the simplicity the code had
+before trying to pass spec tests.  
+But let us put *result correctness over code correctness* and
+first focus on passing the tests.
+
 - improve in-code documentation,
 - add `manual/` directory, write manuals for Muspyche and place 'em there,
 - add *context lookup* feature for partials (can use the same lookup paths and resolution methods as partial resolving code),
+- refactor comments section in rawparse,
+- improve support for comments,
+- improve `parser.parse()` function (maybe refactor to `parser.assemble()`?),
+- fully refactor resolving of partials to rendered,
+- refactor models,
+- refactor rendering engines so they once more have a unified API,
 
 
 ----

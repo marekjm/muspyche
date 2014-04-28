@@ -21,7 +21,7 @@ def gettag(s):
     elif normal is not None: match = normal
     else: match = None
     if match is None: raise Exception(s)
-    return (match.group(1), match.group(2), match.group(0))
+    return (match.group(1), match.group(2).strip(), match.group(0))
 
 def rawparse(template):
     """Split template into a list of nodes.

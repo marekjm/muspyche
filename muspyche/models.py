@@ -49,6 +49,10 @@ class Section(Tag):
     def getname(self):
         return self._name
 
+    def render(self, engine, context, global_context=None, lookup=[], missing=False):
+        if global_context is None: global_context = context
+        return engine(self).render(context, global_context, lookup, missing)
+
 
 class Inverted(Section):
     """Class represetnting 'Inverted Section' type of Mustache tag.
@@ -85,6 +89,9 @@ class Close(Tag):
 class Comment(Tag):
     """Class representing 'Comment' type of Mustache tag.
     """
+    def __init__(self):
+        pass
+
     def render(self, *args, **kwargs):
         return ''
 
@@ -104,6 +111,10 @@ class Partial(Tag):
 
     def getpath(self):
         return self._path
+
+    def render(self, engine, context, global_context=None, lookup=[], missing=False):
+        if global_context is None: global_context = context
+        return engine(self).render(context, global_context, lookup, missing)
 
 
 class Hook(Tag):

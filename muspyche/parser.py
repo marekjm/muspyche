@@ -20,7 +20,7 @@ def gettag(s):
     elif literal is not None: match = literal
     elif normal is not None: match = normal
     else: match = None
-    if match is None: raise Exception(s)
+    if match is None: raise Exception(repr(s))
     return (match.group(1), match.group(2).strip(), match.group(0))
 
 def rawparse(template):
@@ -52,7 +52,14 @@ def rawparse(template):
             i += 2
             tagtype, tagname, whole = gettag(template[i:])
             if tagtype == '!':
-                tree.append( Comment() )
+                n = 1
+                while i+n < len(template):
+                    if template[i+n:].startswith('}}'):
+                        n += 2
+                        break
+                    n += 1
+                whole = ' ' * (n+1)
+                #tree.append( Comment() )
             elif tagtype == '#':
                 tree.append( Section(tagname.strip(), []) )
             elif tagtype == '^':
@@ -251,16 +258,16 @@ def assemble(tree):
 def decomment(tree):
     return [el for el in tree if type(el) != Comment]
 
-def parse(template, lookup=[]):
+def parse(template, lookup=[], missing=True):
     curr = rawparse(template)
     final = []
     while True:
-        next = expandpartials(curr, lookup)
-        next = decomment(next)
-        next = assemble(next)
+        #next = expandpartials(curr, lookup, missing)
+        #next = decomment(next)
+        next = assemble(curr)
         next = insertinjections(next, lookup)
         next = assemble(next)
-        next = decomment(next)
+        #next = decomment(next)
         if curr == next:
             final = next
             break

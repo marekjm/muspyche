@@ -38,13 +38,19 @@ class ContextStack:
         for k, v in self._current.items():
             self._stack[k] = v
 
-    def current(self):
-        return self._current
+    def current(self, stack=False):
+        if stack:
+            context = ContextStack(self._global)
+            context._current = self._current
+        else:
+            context = self._current
+        return context
 
     def adjust(self, path, store=True):
         """Adjusts current context.
         """
         if path and store:
+            #print('-->', path)
             self._adjusts.append(path)
         if path.startswith('::'):
             path = path[2:]
@@ -113,7 +119,7 @@ class ContextStack:
         if key == '.':
             value = self._current
         else:
-            value = (self._stack[key] if key in self._stack else '')
+            value = (self._stack[key] if key in self._stack else self._current[key] if key in self._current else '')
         if type(value) is not str: value = str(value)
         if escape: value = html.escape(str(value))
         if path and self._locked: self.restore()

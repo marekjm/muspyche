@@ -34,6 +34,11 @@ class ContextStackTests(unittest.TestCase):
         stack = muspyche.context.ContextStack(context)
         self.assertEqual('---', stack.adjust('a.b.c.d').get('.'))
 
+    def testBrokenPathResolution(self):
+        context = {'a': {'b': {}}, 'c': {'name': 'Jim'}}
+        stack = muspyche.context.ContextStack(context)
+        self.assertEqual('', stack.get('a.b.c.name'))
+
     def testRestoringSimple(self):
         context = {'c': {'three': 3}, 'a': {'one': 1}, 'd': {'four': 4}, 'b': {'two': 2}, 'e': {'five': 5}}
         stack = muspyche.context.ContextStack(context)
@@ -80,7 +85,7 @@ class ContextStackTests(unittest.TestCase):
         self.assertEqual({}, stack._stack)
         stack.adjust('a')
         self.assertEqual({'one': 1}, stack._stack)
-        stack.adjust('b')
+        stack.adjust('b', global_lookup=True)
         self.assertEqual({'one': 1, 'two': 2}, stack._stack)
 
     def testParsingAccessPaths(self):
@@ -107,6 +112,7 @@ class ContextStackTests(unittest.TestCase):
         context = {'a': {'b': ['OK', None, {'c': {'d': [{'e': {}}]}}]}}
         stack = muspyche.context.ContextStack(context)
         self.assertEqual('OK', stack.get(s))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -83,6 +83,30 @@ class ContextStackTests(unittest.TestCase):
         stack.adjust('b')
         self.assertEqual({'one': 1, 'two': 2}, stack._stack)
 
+    def testParsingAccessPaths(self):
+        s = 'a.b[3].c.d[0].e.::.a.b[]'
+        expected = [('a', None),
+                    ('b', 3),
+                    ('c', None),
+                    ('d', 0),
+                    ('e', None),
+                    ('::', None),
+                    ('a', None),
+                    ('b', 0),
+                    ]
+        got = muspyche.context.parsepath(s)
+        self.assertEqual(expected, got)
+        self.assertEqual([], muspyche.context.parsepath(''))
+
+    def testDumpingAccessPaths(self):
+        s = 'a.b[3].c.d[0].e.::.a.b[0]'
+        self.assertEqual(s, muspyche.context.dumppath(muspyche.context.parsepath(s)))
+
+    def testUsingSpecifiersForAccessPaths(self):
+        s = 'a.b[2].c.d[0].e.::.a.b[]'
+        context = {'a': {'b': ['OK', None, {'c': {'d': [{'e': {}}]}}]}}
+        stack = muspyche.context.ContextStack(context)
+        self.assertEqual('OK', stack.get(s))
 
 if __name__ == '__main__':
     unittest.main()

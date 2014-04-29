@@ -3,7 +3,34 @@
 
 
 import html
+import re
 import warnings
+
+
+def parsepath(path):
+    """Parses access path and
+    returns specifiers to follow.
+    """
+    parts = (path.split('.') if path else [])
+    indexed = re.compile('([a-zA-Z-_]+)\[([0-9]*)\]')
+    for i, part in enumerate(parts):
+        if indexed.match(part) is None:
+            parts[i] = (part, None)
+        else:
+            match = indexed.match(part)
+            parts[i] = (match.group(1), int(match.group(2) if match.group(2) else 0))
+    return parts
+
+def dumppath(parts):
+    """Dumps parsed access path.
+    """
+    path = ''
+    for i, item in enumerate(parts):
+        part, index = item
+        path += part
+        if index is not None: path += '[{}]'.format(index)
+        if i < len(parts)-1: path += '.'
+    return path
 
 
 class ContextStack:
@@ -63,15 +90,15 @@ class ContextStack:
         """
         if path and store:
             self._adjusts.append(path)
-        parts = (path.split('.') if path else [])
-        for part in parts:
+        parts = parsepath(path)
+        for part, index in parts:
             if type(self._current) == bool: break
             if part.startswith('::'):
                 self._toglobal()
                 part = part[2:]
                 if not part: continue
             if part in self._current:
-                self._current = self._current[part]
+                self._current = (self._current[part] if index is None else self._current[part][index])
             elif part in self._global:
                 self._current = self._global[part]
             else:
@@ -113,15 +140,21 @@ class ContextStack:
         """
         value = ''
         path, key = self.split(key)
+        key, index = parsepath(key)[0]
+        #print()
         #print('path:', path)
-        #print('key:', key)
+        #print('key:', key, index)
         #print('current:', self._current)
         if path: self.adjust(path)
+        #print('adjusted:', self._current)
         if key == '.':
             value = self._current
         else:
-            if type(self._current) is not dict: value = self.current()
-            else: value = (self._current[key] if key in self._current else '')
+            if type(self._current) is not dict:
+                value = self.current()
+            else:
+                value = (self._current[key] if key in self._current else '')
+                value = (value if index is None else value[index])
         if type(value) in [bool, int, float]: value = str(value)
         if type(value) is str and escape: value = html.escape(str(value))
         if path: self.restore()

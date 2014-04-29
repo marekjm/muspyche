@@ -12,7 +12,7 @@ def parsepath(path):
     returns specifiers to follow.
     """
     parts = (path.split('.') if path else [])
-    indexed = re.compile('([a-zA-Z-_]+)\[([0-9]*)\]')
+    indexed = re.compile('([a-zA-Z-_]*)\[([0-9]*)\]')
     for i, part in enumerate(parts):
         if indexed.match(part) is None:
             parts[i] = (part, None)
@@ -101,6 +101,8 @@ class ContextStack:
                 self._current = (self._current[part] if index is None else self._current[part][index])
             elif part in self._global:
                 self._current = self._global[part]
+            elif part == '' and index is not None:
+                self._current = self._current[index]
             else:
                 warnings.warn('path cannot be resolved: "{0}": invalid part: {1}'.format(path, part))
                 self._current = {}
@@ -141,12 +143,7 @@ class ContextStack:
         value = ''
         path, key = self.split(key)
         key, index = parsepath(key)[0]
-        #print()
-        #print('path:', path)
-        #print('key:', key, index)
-        #print('current:', self._current)
         if path: self.adjust(path)
-        #print('adjusted:', self._current)
         if key == '.':
             value = self._current
         else:

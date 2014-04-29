@@ -46,8 +46,12 @@ class SectionEngine(BaseEngine):
         if context.current() == False or context.current() == []:
             pass
         elif type(context.current()) == list and len(context.current()) > 0:
-            for i in context:
-                s += render(self._el._template, i, lookup, missing)
+            listed = context.current()
+            for i in range(len(listed)):
+                context.adjust('[{}]'.format(i))
+                s += render(self._el._template, context, lookup, missing)
+                context.restore()
+            context.restore()
         elif type(context.current()) == dict:
             s = render(self._el._template, context, lookup, missing)
         elif type(context.current()) is bool and context.current() == True:

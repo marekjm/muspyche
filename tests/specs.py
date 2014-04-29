@@ -4,16 +4,22 @@
 if Muspyche conforms to the specification for Mustache.
 """
 
+import difflib
 import glob
 import json
 import os
 import shutil
+import sys
 
 import muspyche
 
 
 path = os.path.normpath(os.path.join(os.path.split(__file__)[0], '..', 'spec', 'specs', '*.json'))
 tmp = os.path.normpath(os.path.join(os.path.split(__file__)[0], 'tmp'))
+
+
+FAILFAST = '--failfast' in sys.argv
+
 
 specs = glob.glob(path)
 required, optional = [], []
@@ -35,7 +41,10 @@ def dump(path, string):
 
 required = [(i, loadjson(i)) for i in required if ('comments' not in i and 'delimiters' not in i)] # let's skip comments for now and we don't support delimiter changing
 
+
+stop = False
 for path, case in required:
+    temp, data, got, expexted = '', {}, '', ''
     for test in case['tests']:
         partials = (test['partials'] if 'partials' in test else {})
         for key, value in partials.items(): dump(os.path.join(tmp, key), value)
@@ -46,7 +55,16 @@ for path, case in required:
         print('\b'*n, end='')
         print(' ' * n, end='')
         print('\b'*n, end='')
-        print('{0}: {1}'.format(('OK' if got == test['expected'] else 'FAIL'), title))
+        ok = got == test['expected']
+        print('{0}: {1}'.format(('OK' if ok else 'FAIL'), title))
         for i in [x for x in os.listdir(tmp) if not x.startswith('.')]: os.remove(os.path.join(tmp, i))
-        #print('template:', test['template'])
-        #print('context:', test['data'])
+        if not ok and FAILFAST:
+            stop = True
+            temp, data = test['template'], test['data']
+            expected = test['expected']
+            break
+    if stop:
+        print('template:', temp)
+        print('context:', data)
+        [print(line) for line in difflib.unified_diff(expected.splitlines(), got.splitlines(), fromfile='expected', tofile='got')]
+        break

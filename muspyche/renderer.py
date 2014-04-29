@@ -1,8 +1,9 @@
 """This module holds the rendering code for Muspyche.
 """
 
-from .models import *
+from . import util
 from . import parser
+from .models import *
 
 
 class BaseEngine:
@@ -45,7 +46,7 @@ class SectionEngine(BaseEngine):
         if context.current() == False or context.current() == []:
             pass
         elif type(context.current()) == list and len(context.current()) > 0:
-            for i in context:
+            for i in context.current(stack=True):
                 s += render(self._el._template, i, lookup, missing)
         elif type(context.current()) == dict:
             s = render(self._el._template, context, lookup, missing)
@@ -70,12 +71,13 @@ class PartialEngine(BaseEngine):
     def resolve(self, lookup, missing):
         """Resolves partial.
         """
-        path = parser._findpath(self._el.getpath(), lookup, missing)
+        found, path = parser._findpath(self._el.getpath(), lookup, missing)
+        template = parser.parse((util.read(path) if found else ''))
+        self._el._template = template
+        return self
 
-    def render(self, context, global_context, lookup, missing):
-        self.resolve(lookup, missing)
-        s = ''
-        return s
+    def render(self, context, lookup, missing):
+        return render(self._el._template, context, lookup, missing)
 
 
 def Engine(element):

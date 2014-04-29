@@ -110,9 +110,8 @@ class Partial(Tag):
     def getpath(self):
         return self._path
 
-    def render(self, engine, context, global_context=None, lookup=[], missing=False):
-        if global_context is None: global_context = context
-        return engine(self).render(context, global_context, lookup, missing)
+    def render(self, engine, context, lookup=[], missing=False):
+        return engine(self).resolve(lookup, missing).render(context, lookup, missing)
 
 
 class Hook(Tag):

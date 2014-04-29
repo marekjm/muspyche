@@ -4,6 +4,7 @@ parsing, expanding and rendering of templates.
 """
 
 from . import parser, renderer
+from .context import ContextStack
 
 
 def make(template, context, lookup=[], missing=False):
@@ -17,4 +18,5 @@ def make(template, context, lookup=[], missing=False):
     It returns string containg template rendered against given context.
     """
     parsed = parser.parse(template, lookup, missing)
-    return renderer.render(parsed, context, context, lookup, missing)
+    context = ContextStack(context)
+    return renderer.render(parsed, context, lookup, missing)

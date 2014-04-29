@@ -75,6 +75,15 @@ class ContextStackTests(unittest.TestCase):
         self.assertEqual('/', stack.get('::home'))
         self.assertEqual('~', stack.get('home'))
 
+    def testStackBuilding(self):
+        context = {'c': {'three': 3}, 'a': {'one': 1}, 'd': {'four': 4}, 'b': {'two': 2}, 'e': {'five': 5}}
+        stack = muspyche.context.ContextStack(context)
+        self.assertEqual({}, stack._stack)
+        stack.adjust('a')
+        self.assertEqual({'one': 1}, stack._stack)
+        stack.adjust('b')
+        self.assertEqual({'one': 1, 'two': 2}, stack._stack)
+
 
 if __name__ == '__main__':
     unittest.main()

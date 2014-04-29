@@ -7,6 +7,10 @@ import re
 import warnings
 
 
+# issue warnings?
+WARN = False
+
+
 def parsepath(path):
     """Parses access path and
     returns specifiers to follow.
@@ -85,7 +89,7 @@ class ContextStack:
             context = self._current
         return context
 
-    def adjust(self, path, store=True):
+    def adjust(self, path, store=True, global_lookup=False):
         """Adjusts current context.
         """
         if path and store:
@@ -99,12 +103,12 @@ class ContextStack:
                 if not part: continue
             if part in self._current:
                 self._current = (self._current[part] if index is None else self._current[part][index])
-            elif part in self._global:
+            elif part in self._global and global_lookup:
                 self._current = self._global[part]
             elif part == '' and index is not None:
                 self._current = self._current[index]
             else:
-                warnings.warn('path cannot be resolved: "{0}": invalid part: {1}'.format(path, part))
+                if WARN: warnings.warn('path cannot be resolved: "{0}": invalid part: {1}'.format(path, part))
                 self._current = {}
                 break
         self._updatestack()
@@ -143,7 +147,8 @@ class ContextStack:
         value = ''
         path, key = self.split(key)
         key, index = parsepath(key)[0]
-        if path: self.adjust(path)
+        if path:
+            self.adjust(path)
         if key == '.':
             value = self._current
         else:

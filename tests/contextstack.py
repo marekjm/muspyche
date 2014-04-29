@@ -34,44 +34,43 @@ class ContextStackTests(unittest.TestCase):
         stack = muspyche.context.ContextStack(context)
         self.assertEqual('---', stack.adjust('a.b.c.d').get('.'))
 
-    def testRestoring(self):
-        context = {'a': {
-                         'b': {
-                               'c': {
-                                     'd': {
-                                           'e': 'E'
-                                           },
-                                     'f': 'F'
-                               },
-                               'g': 'G',
-                               'h': {
-                                     'i': 'I'
-                               }
-                         }
-                   },
-                   'z': 'Z'
-                  }
+    def testRestoringSimple(self):
+        context = {'c': {'three': 3}, 'a': {'one': 1}, 'd': {'four': 4}, 'b': {'two': 2}, 'e': {'five': 5}}
         stack = muspyche.context.ContextStack(context)
-        stack.adjust('a.b.c')
-        stack.adjust('d')
-        self.assertEqual('', stack.get('f'))
-        self.assertEqual('E', stack.get('e'))
+        stack.adjust('a')
+        self.assertEqual({'one': 1}, stack.current())
         stack.restore()
-        self.assertEqual('F', stack.get('f'))
-        self.assertEqual('', stack.get('e'))
-        stack.adjust('::a.b.h')
-        self.assertEqual('', stack.get('g'))
-        self.assertEqual('I', stack.get('i'))
-        stack.restore()
-        self.assertEqual('F', stack.get('f'))
-        self.assertEqual('', stack.get('i'))
+        self.assertEqual(context, stack.current())
 
-    def testGettingAbsoluteKeysDoesNotInfluenceAdjustmentWhenLocked(self):
+    def testRestoringNested(self):
+        context = {'a': {'one': 1, 'b': {'two': 2, 'c': {'three': 3}}}}
+        stack = muspyche.context.ContextStack(context)
+        self.assertEqual(context, stack.current())
+        stack.adjust('a') # down to 'a'
+        self.assertEqual(context['a'], stack.current())
+        stack.restore()   # back to global
+        self.assertEqual(context, stack.current())
+        stack.adjust('a') # down to 'a'
+        stack.adjust('b') # down to 'b'
+        stack.adjust('c') # down to 'c'
+        self.assertEqual(context['a']['b']['c'], stack.current())
+        stack.adjust('::a.b.c') # from top to ::a.b.c
+        stack.adjust('::a.b.c') # from top to ::a.b.c
+        self.assertEqual(context['a']['b']['c'], stack.current())
+        stack.restore()   # will remain in the same place because there were two sequential absolute adjusts to the same path performed
+        self.assertEqual(context['a']['b']['c'], stack.current())
+        stack.restore()   # back to 'c'
+        stack.restore()   # back to 'b'
+        self.assertEqual(context['a']['b'], stack.current())
+        self.assertEqual('3', stack.get('c.three'))
+        self.assertEqual('3', stack.get('::a.b.c.three'))
+        self.assertEqual('3', stack.get('c.three'))
+
+    def testGettingAbsoluteKeysDoesNotInfluenceAdjustment(self):
         context = {'home': '/', 'user': {'home': '~'}}
         stack = muspyche.context.ContextStack(context)
         stack.adjust('user')
         self.assertEqual('~', stack.get('home'))
-        stack.lock()
         self.assertEqual('/', stack.get('::home'))
         self.assertEqual('~', stack.get('home'))
 

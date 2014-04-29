@@ -13,7 +13,7 @@ class ContextStack:
         self._global, self._current = {}, {}
         self._stack = {}
         self._adjusts, self._stacks = [], []
-        self._locked = False
+        self._index = None
         for k, v in context.items(): self._global[k] = v
         self._toglobal()
 
@@ -22,10 +22,11 @@ class ContextStack:
         """
         if type(self._current) == list:
             l = []
-            for i in self._current:
+            for i, item in enumerate(self._current):
                 context = ContextStack(self._global)
-                context._current = i
-                context.lock()
+                context._current = item
+                context._index = i
+                context._adjusts = self._adjusts
                 l.append(context)
         else:
             l = self._current
@@ -52,8 +53,7 @@ class ContextStack:
 
     def current(self, stack=False):
         if stack:
-            context = ContextStack(self._global)
-            context._current = self._current
+            context = self
         else:
             context = self._current
         return context
@@ -62,14 +62,14 @@ class ContextStack:
         """Adjusts current context.
         """
         if path and store:
-            #print('--> {0}'.format(path))
             self._adjusts.append(path)
-        if path.startswith('::'):
-            path = path[2:]
-            self._toglobal()
         parts = (path.split('.') if path else [])
         for part in parts:
             if type(self._current) == bool: break
+            if part.startswith('::'):
+                self._toglobal()
+                part = part[2:]
+                if not part: continue
             if part in self._current:
                 self._current = self._current[part]
             elif part in self._global:
@@ -86,19 +86,8 @@ class ContextStack:
         """
         if self._adjusts: self._adjusts.pop(-1)
         path = '::' + '.'.join(self._adjusts)
-        #print('<-- {0}'.format(path))
         self.adjust(path, store=False)
-
-    def lock(self):
-        """When context is locked it will stay in the same context and
-        any adjustments made by .get() will be atomic to single calls.
-        """
-        self._locked = True
-
-    def unlock(self):
-        """Unlock context.
-        """
-        self._locked = False
+        if self._index is not None: self._current = self._current[self._index]
 
     def split(self, path):
         """Splits context access path to namespace and key.
@@ -117,22 +106,25 @@ class ContextStack:
 
     def get(self, key, escape=True):
         """Returns value associated with given key.
-        Key is a string that may contain dots (access specifiers) and double-colons (global context switches).
+        Key is a string that may contain dots (access specifiers) and double-colons (global context switches),
+        in such case an adjustemnt of context will be performed. Adjustemnts made by .get() are atomic to single call.
         Key may be just a single dot, in which case it will yield what is currently on top of _current context.
         Non-list, non-string values are automatically coerced to empty strings before being returned.
         """
         value = ''
         path, key = self.split(key)
+        #print('path:', path)
+        #print('key:', key)
+        #print('current:', self._current)
         if path: self.adjust(path)
         if key == '.':
             value = self._current
         else:
-            #if key in self._stack: value = self._stack[key]
             if type(self._current) is not dict: value = self.current()
             else: value = (self._current[key] if key in self._current else '')
-        if type(value) is not str: value = str(value)
-        if escape: value = html.escape(str(value))
-        if path and self._locked: self.restore()
+        if type(value) in [bool, int, float]: value = str(value)
+        if type(value) is str and escape: value = html.escape(str(value))
+        if path: self.restore()
         return value
 
     def keys(self):

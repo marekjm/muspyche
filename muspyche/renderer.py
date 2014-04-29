@@ -46,7 +46,7 @@ class SectionEngine(BaseEngine):
         if context.current() == False or context.current() == []:
             pass
         elif type(context.current()) == list and len(context.current()) > 0:
-            for i in context.current(stack=True):
+            for i in context:
                 s += render(self._el._template, i, lookup, missing)
         elif type(context.current()) == dict:
             s = render(self._el._template, context, lookup, missing)

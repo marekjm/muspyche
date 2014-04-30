@@ -258,18 +258,34 @@ def assemble(tree):
 def decomment(tree):
     return [el for el in tree if type(el) != Comment]
 
+def clean(tree):
+    """Cleans tree from unneeded whitespace, newlines etc.
+    Call it eye-candy for code.
+    """
+    cleaned = []
+    i = 0
+    while i < len(tree):
+        item = tree[i]
+        next = (tree[i+1] if i < len(tree)-1 else None)
+        prev = (tree[i-1] if i > 0 else None)
+        if type(item) == Section and type(next) == TextNode and type(prev) == TextNode:
+            if next._text.startswith('\n') and prev._text.endswith('\n'): next._text = next._text[1:]
+        elif type(item) == Section and type(next) == TextNode:
+            if next._text.startswith('\n'): next._text = next._text[1:]
+        cleaned.append(item)
+        i += 1
+    return cleaned
+
 def parse(template, lookup=[], missing=True):
     curr = rawparse(template)
     final = []
     while True:
-        #next = expandpartials(curr, lookup, missing)
-        #next = decomment(next)
-        next = assemble(curr)
+        next = clean(curr)
+        next = assemble(next)
         next = insertinjections(next, lookup)
         next = assemble(next)
-        #next = decomment(next)
         if curr == next:
             final = next
             break
         curr = next
-    return final
+    return clean(final)

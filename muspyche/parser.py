@@ -58,7 +58,7 @@ def rawparse(template):
                         n += 2
                         break
                     n += 1
-                whole = ' ' * (n+1)
+                whole = ' ' * n
                 #tree.append( Comment() )
             elif tagtype == '#':
                 tree.append( Section(tagname.strip(), []) )

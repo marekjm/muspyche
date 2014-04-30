@@ -55,6 +55,8 @@ class SectionEngine(BaseEngine):
             s = render(self._el._template, context, lookup, missing)
         elif type(context.current()) is bool and context.current() == True:
             s = render(self._el._template, context, lookup, missing)
+        elif bool(context.current()) == False:
+            pass
         else:
             raise TypeError('invalid type for context: expected list or dict but got {0}'.format(type(context.current())))
         context.restore()

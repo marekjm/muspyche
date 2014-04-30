@@ -10,7 +10,7 @@ import warnings
 # issue warnings?
 WARN = False
 # print debugging message?
-DEBUG = True
+DEBUG = False
 
 
 def parsepath(path):
@@ -116,7 +116,7 @@ class ContextStack:
                 self._current = self._current[index]
             else:
                 if WARN: warnings.warn('path cannot be resolved: "{0}": invalid part: {1}'.format(path, part))
-                self._current = {}
+                self._current = ''
                 break
         self._updatestack()
         return self

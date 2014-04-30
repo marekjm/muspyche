@@ -9,6 +9,8 @@ import warnings
 
 # issue warnings?
 WARN = False
+# print debugging message?
+DEBUG = True
 
 
 def parsepath(path):
@@ -94,9 +96,14 @@ class ContextStack:
         """
         if path and store:
             self._adjusts.append(path)
+        if DEBUG:
+            print('adjusts:', self._adjusts)
+            print(' * current:', self.current())
         parts = parsepath(path)
+        if DEBUG:
+            print('parsed parts:', parts)
         for part, index in parts:
-            if type(self._current) == bool: break
+            if type(self._current) == bool and store: break
             if part.startswith('::'):
                 self._toglobal()
                 part = part[2:]
@@ -119,6 +126,7 @@ class ContextStack:
         """
         if self._adjusts: self._adjusts.pop(-1)
         path = '::' + '.'.join(self._adjusts)
+        if DEBUG: print('restoring to:', path)
         self.adjust(path, store=False)
         if self._index is not None: self._current = self._current[self._index]
 
@@ -146,9 +154,15 @@ class ContextStack:
         """
         value = ''
         path, key = self.split(key)
+        if DEBUG: print('path:', repr(path))
+        if DEBUG: print('key:', repr(key), end=' -> ')
         key, index = parsepath(key)[0]
+        if DEBUG: print(key, index)
+        if DEBUG: print('current:', self.current())
         if path:
+            if DEBUG: print('adjusting:', repr(path))
             self.adjust(path)
+        if DEBUG: print('current:', self.current())
         if key == '.':
             value = self._current
         else:

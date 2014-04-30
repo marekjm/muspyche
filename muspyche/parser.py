@@ -59,7 +59,6 @@ def rawparse(template):
                         break
                     n += 1
                 whole = ' ' * n
-                #tree.append( Comment() )
             elif tagtype == '#':
                 tree.append( Section(tagname.strip(), []) )
             elif tagtype == '^':
@@ -254,9 +253,6 @@ def assemble(tree):
         assembled.append(part)
         i += n
     return assembled
-
-def decomment(tree):
-    return [el for el in tree if type(el) != Comment]
 
 def clean(tree):
     """Cleans tree from unneeded whitespace, newlines etc.

@@ -8,9 +8,9 @@ import warnings
 
 
 # issue warnings?
-WARN = False
+WARN = 0
 # print debugging message?
-DEBUG = False
+DEBUG = 0
 
 
 def parsepath(path):

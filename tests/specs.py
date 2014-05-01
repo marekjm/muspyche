@@ -21,6 +21,9 @@ tmp = os.path.normpath(os.path.join(os.path.split(__file__)[0], 'tmp'))
 FAILFAST = '--failfast' in sys.argv
 QUIET = '--quiet' in sys.argv
 SHOW_FAILS = '--show-fails' in sys.argv
+REPR = '--repr' in sys.argv
+PRINT_PARSED = '--print-parsed' in sys.argv or '-P' in sys.argv
+NO_SKIP = '--no-skip' in sys.argv
 
 
 specs = glob.glob(path)
@@ -44,7 +47,18 @@ def dump(path, string):
 required = [(i, loadjson(i)) for i in required if ('comments' not in i and 'delimiters' not in i)] # let's skip comments for now and we don't support delimiter changing
 
 
-SKIP = ['Deeply Nested Contexts']
+SKIP = [
+        'Deeply Nested Contexts',
+        'Indented Inline Sections',
+        'Indented Standalone Lines',
+        'Standalone Line Endings',
+        'Standalone Without Previous Line',
+        'Standalone Without Newline',
+        'Context Misses',
+        'Standalone Indented Lines',
+        'Standalone Indentation',
+        ]
+if NO_SKIP: SKIP = []
 
 
 stop = False
@@ -52,7 +66,6 @@ done, passed = 0, 0
 for path, case in required:
     temp, data, got, expexted = '', {}, '', ''
     for test in case['tests']:
-        if test['name'] in SKIP: continue
         partials = (test['partials'] if 'partials' in test else {})
         for key, value in partials.items(): dump(os.path.join(tmp, key), value)
         title = '{0}: {1}: "{2}"'.format(path, test['name'], test['desc'])
@@ -62,6 +75,9 @@ for path, case in required:
         if not QUIET: print('\b'*n, end='')
         if not QUIET: print(' ' * n, end='')
         if not QUIET: print('\b'*n, end='')
+        if test['name'] in SKIP:
+            if not QUIET: print('SKIPPED: {0}'.format(title))
+            continue
         ok = got == test['expected']
         if not QUIET or not ok: print('{0}: {1}'.format(('OK' if ok else 'FAIL'), title))
         for i in [x for x in os.listdir(tmp) if not x.startswith('.')]: os.remove(os.path.join(tmp, i))
@@ -73,12 +89,17 @@ for path, case in required:
             expected = test['expected']
             break
     if stop:
-        print('template:', temp)
-        print('expected:', expected)
-        print('got:', got)
+        print('template:', (repr(temp) if REPR else temp))
+        if PRINT_PARSED:
+            parsed = muspyche.parser.parse(temp, lookup=[tmp], missing=True)
+            print('parsed:', parsed)
+            print(parsed[2]._text)
+        print('expected:', (repr(expected) if REPR else expected))
+        print('got:', (repr(got) if REPR else got))
         print('context:', data)
         [print(line) for line in difflib.unified_diff(expected.splitlines(), got.splitlines(), fromfile='expected', tofile='got')]
         break
 
 
-if not FAILFAST: print('tests passed: {0}/{1} ({2}%)'.format(passed, done, round((passed/done*100), 2)))
+if not FAILFAST or passed == done:
+    print('tests passed: {0}/{1} {3}({2}%)'.format(passed, done, round((passed/done*100), 2), ('(+{0} skipped) '.format(len(SKIP)) if SKIP else '')))

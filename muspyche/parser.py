@@ -6,7 +6,9 @@ from .models import *
 from . import util
 
 
+WARN = 0
 DEBUG = 0
+QUICKTEST = 0
 
 
 def gettag(s):
@@ -254,6 +256,52 @@ def assemble(tree):
         i += n
     return assembled
 
+def _isstandalone(tree, index):
+    """Returns tuple containing information about whether given index in given tree is a standalone tag.
+    Returned value is a 3-tuple: (standalone, where, cut)
+
+    - standalone: actual info about whether the index is standalone ornot,
+    - where: where to use cut (useful only for standlone tags),
+    - cut: cut to apply to a text of item (defined by `where`, usefulonly for standalone tags),
+    """
+    standalone, where, cut = False, '', 0
+    if type(tree[index]) not in [Section, Close, Inverted]: return (standalone, where, cut)
+    prev = (tree[index-1] if index > 0 else None)
+    next = (tree[index+1] if index < len(tree)-1 else None)
+    report = ''
+    report += '[{0}, {1}] '.format(str(type(prev))[8:-2], str(type(next))[8:-2])
+    report += 'index: {0} and object: {1} '.format(index, tree[index])
+    if type(prev) is TextNode and type(next) is TextNode:
+        text = next._text
+        for i in range(len(text)):
+            if text[i] not in [' ', '\n']:
+                break
+            if text[i] == '\n':
+                standalone, where, cut = True, 'next', i+1
+                break
+        if '\n' not in prev._text and (tree[index].inline() if type(tree[index]) in [Section, Inverted] else True): standalone = False
+    elif prev is None and type(next) is TextNode:
+        report += '(appears to be the first element) '
+        text = next._text
+        for i in range(len(text)):
+            if text[i] not in [' ', '\n']:
+                break
+            if text[i] == '\n':
+                standalone, where, cut = True, 'next', i+1
+                break
+    elif type(prev) is TextNode and next is None:
+        report += '(appears to be the last element) '
+        text = prev._text
+        for i in range(1, len(text)):
+            i = -i
+            if text[i] not in [' ', '\n']:
+                break
+            if text[i] == '\n':
+                standalone, where, cut = True, 'prev', i
+                break
+    if QUICKTEST and standalone: print(report + ('standalone' if standalone else ''))
+    return (standalone, where, cut)
+
 def clean(tree):
     """Cleans tree from unneeded whitespace, newlines etc.
     Call it eye-candy for code.
@@ -264,10 +312,16 @@ def clean(tree):
         item = tree[i]
         next = (tree[i+1] if i < len(tree)-1 else None)
         prev = (tree[i-1] if i > 0 else None)
-        if type(item) == Section and type(next) == TextNode and type(prev) == TextNode:
-            if next._text.startswith('\n') and prev._text.endswith('\n'): next._text = next._text[1:]
-        elif type(item) == Section and type(next) == TextNode:
-            if next._text.startswith('\n'): next._text = next._text[1:]
+        standalone, where, cut = _isstandalone(tree, i)
+        if standalone:
+            if where == 'prev':
+                if QUICKTEST: print('prev:', repr(prev._text), end=' -> ')
+                prev._text = prev._text[:cut]
+                if QUICKTEST: print(repr(prev._text))
+            else:
+                if QUICKTEST: print('next:', repr(next._text), end=' -> ')
+                next._text = next._text[cut:]
+                if QUICKTEST: print(repr(next._text))
         cleaned.append(item)
         i += 1
     return cleaned
@@ -279,9 +333,8 @@ def parse(template, lookup=[], missing=True):
         next = clean(curr)
         next = assemble(next)
         next = insertinjections(next, lookup)
-        next = assemble(next)
         if curr == next:
             final = next
             break
         curr = next
-    return clean(final)
+    return final

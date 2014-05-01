@@ -51,6 +51,16 @@ class Section(Tag):
     def render(self, engine, context, lookup=[], missing=False):
         return engine(self).render(context, lookup, missing)
 
+    def inline(self):
+        """Returns true if section is inline, e.g. does not contain any newline.
+        """
+        inline = True
+        for i in self._template:
+            if type(i) == TextNode and '\n' in i._text: inline = False
+            if type(i) == Section and not i.inline(): inline = False
+            if not inline: break
+        return inline
+
 
 class Inverted(Section):
     """Class represetnting 'Inverted Section' type of Mustache tag.

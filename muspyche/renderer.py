@@ -67,7 +67,8 @@ class InvertedEngine(SectionEngine):
     def render(self, context, lookup, missing):
         s = ''
         context.adjust(self._el.getname())
-        if context.current() == False or context.current() == []: s = render(self._el._template, context, lookup, missing)
+        if context.current() == False or context.current() == [] or context.current() == '': s = render(self._el._template, context, lookup, missing)
+        context.restore()
         return s
 
 

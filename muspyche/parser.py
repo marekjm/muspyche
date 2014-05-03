@@ -8,7 +8,7 @@ from . import util
 
 WARN = 0
 DEBUG = 0
-QUICKTEST = 1
+QUICKTEST = 0
 
 
 def gettag(s):
@@ -43,6 +43,7 @@ def rawparse(template):
     text = ''
     i = 0
     opened = False
+    template = template.replace('\r\n', '\n')
     while i < len(template):
         if i+3 >= len(template): # this means template cannot include even one tag so there's no need for parsing
             text += template[i:]
@@ -72,6 +73,11 @@ def rawparse(template):
             else:
                 tree.append( types[tagtype](tagname.strip()) )
             i += len(whole)-1
+        elif template[i] == '\n' or template[i:i+2] == '\r\n':
+            if text:
+                tree.append( TextNode(text) )
+                text = ''
+            tree.append( Newline(template[i]) )
         else:
             text += template[i]
         i += 1
@@ -325,10 +331,10 @@ def _isstandalone(tree, index):
         #if (prev._text[-1] != '\n' if prev._text else False) and not _hasbackpadding(prev._text): #_isspace(prev._text[prev._text.rfind('\n'):]):
         #    if QUICKTEST: print('[{0}] standalone = false; (newline not in last index of preceding text node: {1})'.format(index, repr(prev._text)))
         #    standalone = False
-        #if index == 1 and _isspace(prev._text) and (next._text[0] == '\n' if next._text else False):
-        #    if QUICKTEST: print('[{0}] standalone = true; (node is preceded only by indentation)'.format(index))
-        #    standalone = True
-        #    where = 'next,empty.prev'
+        if index == 1 and _isspace(prev._text) and _hasfrontpadding(next._text):
+            if QUICKTEST: print('[{0}] standalone = true; (node is preceded only by indentation)'.format(index))
+            standalone = True
+            where = 'next,empty.prev'
         #if '\n' not in prev._text and (tree[index].inline() if type(tree[index]) in [Section, Inverted] else True):
         #    standalone = False
         if (prev._text[-1] == '\n' if prev._text else False) and (next._text[0] == '\n' if next._text else False):

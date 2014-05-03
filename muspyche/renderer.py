@@ -14,7 +14,7 @@ class BaseEngine:
     def __init__(self, element):
         self._el = element
 
-    def render(self, context, global_context):
+    def render(self, context):
         """Template .render() method for rendering engines.
 
         All methods overriding this one in subclasses must accept
@@ -34,12 +34,17 @@ class VariableEngine(BaseEngine):
 
 
 class TextNodeEngine(BaseEngine):
-    def render(self, context, global_context=None):
+    def render(self, context):
         return self._el._text
 
 
+class NewlineEngine(TextNode):
+    def render(self, newline):
+        return (self._text._text if newline is None else newline)
+
+
 class SectionEngine(BaseEngine):
-    def render(self, context, lookup, missing):
+    def render(self, context, lookup, missing, newline):
         s = ''
         name = self._el.getname()
         context.adjust(name)
@@ -49,12 +54,12 @@ class SectionEngine(BaseEngine):
             listed = context.current()
             for i in range(len(listed)):
                 context.adjust('[{}]'.format(i))
-                s += render(self._el._template, context, lookup, missing)
+                s += render(self._el._template, context, lookup, missing, newline)
                 context.restore()
         elif type(context.current()) == dict:
-            s = render(self._el._template, context, lookup, missing)
+            s = render(self._el._template, context, lookup, missing, newline)
         elif type(context.current()) is bool and context.current() == True:
-            s = render(self._el._template, context, lookup, missing)
+            s = render(self._el._template, context, lookup, missing, newline)
         elif bool(context.current()) == False:
             pass
         else:
@@ -64,10 +69,10 @@ class SectionEngine(BaseEngine):
 
 
 class InvertedEngine(SectionEngine):
-    def render(self, context, lookup, missing):
+    def render(self, context, lookup, missing, newline):
         s = ''
         context.adjust(self._el.getname())
-        if context.current() == False or context.current() == [] or context.current() == '': s = render(self._el._template, context, lookup, missing)
+        if context.current() == False or context.current() == [] or context.current() == '': s = render(self._el._template, context, lookup, missing, newline)
         context.restore()
         return s
 
@@ -83,8 +88,8 @@ class PartialEngine(BaseEngine):
         self._el._template = template
         return self
 
-    def render(self, context, lookup, missing):
-        return render(self._el._template, context, lookup, missing)
+    def render(self, context, lookup, missing, newline):
+        return render(self._el._template, context, lookup, missing, newline)
 
 
 def Engine(element):
@@ -97,6 +102,8 @@ def Engine(element):
         engine = VariableEngine
     elif type(element) == TextNode:
         engine = TextNodeEngine
+    elif type(element) == Newline:
+        engine = NewlineEngine
     elif type(element) == Section:
         engine = SectionEngine
     elif type(element) == Inverted:
@@ -114,9 +121,8 @@ def render(tree, context, lookup, missing=False, newline=None):
     s = ''
     for el in tree:
         engine = Engine(el)
-        if type(el) in [Section, Inverted]: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing)
-        elif type(el) is Partial: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing)
+        if type(el) in [Section, Inverted]: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing, newline=newline)
+        elif type(el) is Partial: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing, newline=newline)
+        elif type(el) is Newline: s += el.render(engine, newline)
         else: s += el.render(engine=engine, context=context)
-    if newline is not None:
-        s = newline.join(s.split('\n'))
     return s

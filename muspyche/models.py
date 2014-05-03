@@ -48,8 +48,8 @@ class Section(Tag):
     def getname(self):
         return self._name
 
-    def render(self, engine, context, lookup=[], missing=False):
-        return engine(self).render(context, lookup, missing)
+    def render(self, engine, context, lookup=[], missing=False, newline=None):
+        return engine(self).render(context, lookup, missing, newline)
 
     def inline(self):
         """Returns true if section is inline, e.g. does not contain any newline.
@@ -60,6 +60,14 @@ class Section(Tag):
             if type(i) == Section and not i.inline(): inline = False
             if not inline: break
         return inline
+
+    def linespan(self):
+        """Returns number of lines this section spans.
+        """
+        n = 1
+        for i in self._template:
+            if type(i) == Newline: n += 1
+        return n
 
 
 class Inverted(Section):
@@ -111,6 +119,13 @@ class TextNode(Tag):
         self._text = text
 
 
+class Newline(TextNode):
+    """Separate class for newlines to make Windows/Linux compatibility, and
+    formatting easier.
+    """
+    pass
+
+
 class Partial(Tag):
     """Class representing 'Partial' type of Mustache tag.
     """
@@ -120,8 +135,8 @@ class Partial(Tag):
     def getpath(self):
         return self._path
 
-    def render(self, engine, context, lookup=[], missing=False):
-        return engine(self).resolve(lookup, missing).render(context, lookup, missing)
+    def render(self, engine, context, lookup=[], missing=False, newline=None):
+        return engine(self).resolve(lookup, missing).render(context, lookup, missing, newline)
 
 
 class Hook(Tag):

@@ -109,10 +109,7 @@ for path, case in required:
             break
     if stop:
         print('template:', (repr(temp) if REPR else temp))
-        if PRINT_PARSED:
-            parsed = muspyche.parser.parse(temp, lookup=[tmp], missing=True)
-            print('parsed:', parsed)
-            print(parsed[2]._text)
+        if PRINT_PARSED: print('parsed:', parsed)
         print('expected:', (repr(expected) if REPR else expected))
         print('got:', (repr(got) if REPR else got))
         print('context:', data)

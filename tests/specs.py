@@ -14,23 +14,31 @@ import sys
 import muspyche
 
 
+print('using myspyche v. {0}'.format(muspyche.__version__))
+
+
 path = os.path.normpath(os.path.join(os.path.split(__file__)[0], '..', 'spec', 'specs', '*.json'))
 tmp = os.path.normpath(os.path.join(os.path.split(__file__)[0], 'tmp'))
 
 
+# Flow flags
 FAILFAST = '--failfast' in sys.argv
+
+# Reporting flags
 QUIET = '--quiet' in sys.argv
 SHOW_FAILS = '--show-fails' in sys.argv
 REPR = '--repr' in sys.argv
 PRINT_PARSED = '--print-parsed' in sys.argv or '-P' in sys.argv
+
+# Test coverage flags
 NO_SKIP = '--no-skip' in sys.argv
+NO_DROP = '--no-drop' in sys.argv
+FULL_COVERAGE = '--run-all' in sys.argv
 
 
 specs = glob.glob(path)
 required, optional = [], []
 for i in specs: (optional if os.path.split(i)[1].startswith('~') else required).append(i)
-#print('required:', required)
-#print('optional:', optional)
 
 def loadjson(path):
     ifstream = open(path)
@@ -48,35 +56,43 @@ required = [(i, loadjson(i)) for i in required if ('comments' not in i and 'deli
 
 
 SKIP = [
-        'Deeply Nested Contexts',
         'Indented Inline Sections',
         'Indented Standalone Lines',
         'Standalone Line Endings',
-        'Standalone Without Previous Line',
         'Standalone Without Newline',
-        'Context Misses',
         'Standalone Indented Lines',
         'Standalone Indentation',
+        'Standalone Without Previous Line',
         ]
-if NO_SKIP: SKIP = []
+DROP = [
+        'Deeply Nested Contexts',
+        ]
+if NO_SKIP or FULL_COVERAGE: SKIP = []
+if NO_DROP or FULL_COVERAGE: DROP = []
 
 
 stop = False
 done, passed = 0, 0
 for path, case in required:
     temp, data, got, expexted = '', {}, '', ''
+    parsed = []
     for test in case['tests']:
         partials = (test['partials'] if 'partials' in test else {})
         for key, value in partials.items(): dump(os.path.join(tmp, key), value)
         title = '{0}: {1}: "{2}"'.format(path, test['name'], test['desc'])
         if not QUIET: print('testing: {0}'.format(title), end='')
-        got = muspyche.api.make(template=test['template'], context=test['data'], lookup=[tmp], missing=True)
+        parsed = muspyche.parser.parse(template=test['template'])
+        context = muspyche.context.ContextStack(context=test['data'], global_lookup=True)
+        got = muspyche.renderer.render(parsed, context, lookup=[tmp], missing=True)
         n = len(title) + len('testing: ')
         if not QUIET: print('\b'*n, end='')
         if not QUIET: print(' ' * n, end='')
         if not QUIET: print('\b'*n, end='')
         if test['name'] in SKIP:
             if not QUIET: print('SKIPPED: {0}'.format(title))
+            continue
+        if test['name'] in DROP:
+            if not QUIET: print('DROPPED: {0}'.format(title))
             continue
         ok = got == test['expected']
         if not QUIET or not ok: print('{0}: {1}'.format(('OK' if ok else 'FAIL'), title))
@@ -102,4 +118,6 @@ for path, case in required:
 
 
 if not FAILFAST or passed == done:
-    print('tests passed: {0}/{1} {3}({2}%)'.format(passed, done, round((passed/done*100), 2), ('(+{0} skipped) '.format(len(SKIP)) if SKIP else '')))
+    skipped = ('(+{0} skipped) '.format(len(SKIP)) if SKIP else '')
+    dropped = ('(+{0} dropped) '.format(len(DROP)) if DROP else '')
+    print('tests passed: {0}/{1} ({2}%) {3}{4}'.format(passed, done, round((passed/done*100), 2), skipped, dropped))

@@ -59,9 +59,9 @@ SKIP = [
         'Indented Inline Sections',
         'Indented Standalone Lines',
         'Standalone Line Endings',
-        'Standalone Without Newline',
         'Standalone Indented Lines',
         'Standalone Indentation',
+        'Standalone Without Newline',
         'Standalone Without Previous Line',
         ]
 DROP = [
@@ -73,6 +73,7 @@ if NO_DROP or FULL_COVERAGE: DROP = []
 
 stop = False
 done, passed = 0, 0
+skipped, dropped = 0, 0
 for path, case in required:
     temp, data, got, expexted = '', {}, '', ''
     parsed = []
@@ -87,9 +88,11 @@ for path, case in required:
         if not QUIET: print('\b'*n, end='')
         if test['name'] in SKIP:
             if not QUIET: print('SKIPPED: {0}'.format(title))
+            skipped += 1
             continue
         if test['name'] in DROP:
             if not QUIET: print('DROPPED: {0}'.format(title))
+            dropped += 1
             continue
         parsed = muspyche.parser.parse(template=test['template'])
         context = muspyche.context.ContextStack(context=test['data'], global_lookup=(test['name'] == 'Deeply Nested Contexts'))
@@ -119,6 +122,9 @@ for path, case in required:
 
 
 if not FAILFAST or passed == done:
-    skipped = ('(+{0} skipped) '.format(len(SKIP)) if SKIP else '')
-    dropped = ('(+{0} dropped) '.format(len(DROP)) if DROP else '')
-    print('tests passed: {0}/{1} ({2}%) {3}{4}'.format(passed, done, round((passed/done*100), 2), skipped, dropped))
+    all = done + skipped + dropped
+    skipped = ('+{0} skipped'.format(skipped) if SKIP else '')
+    dropped = ('+{0} dropped'.format(dropped) if DROP else '')
+    moar = '({0}% with {1}{2}{3})'.format(round(passed/all*100, 2), skipped, (', ' if dropped and skipped else ''), dropped)
+    if all == done: moar = ''
+    print('tests passed: {0}/{1}{2} ({3}%) {4}'.format(passed, done, (':{0}'.format(all) if all != done else ''), round((passed/done*100), 2), moar))

@@ -81,9 +81,6 @@ for path, case in required:
         for key, value in partials.items(): dump(os.path.join(tmp, key), value)
         title = '{0}: {1}: "{2}"'.format(path, test['name'], test['desc'])
         if not QUIET: print('testing: {0}'.format(title), end='')
-        parsed = muspyche.parser.parse(template=test['template'])
-        context = muspyche.context.ContextStack(context=test['data'], global_lookup=(test['name'] == 'Deeply Nested Contexts'))
-        got = muspyche.renderer.render(parsed, context, lookup=[tmp], missing=True)
         n = len(title) + len('testing: ')
         if not QUIET: print('\b'*n, end='')
         if not QUIET: print(' ' * n, end='')
@@ -94,6 +91,9 @@ for path, case in required:
         if test['name'] in DROP:
             if not QUIET: print('DROPPED: {0}'.format(title))
             continue
+        parsed = muspyche.parser.parse(template=test['template'])
+        context = muspyche.context.ContextStack(context=test['data'], global_lookup=(test['name'] == 'Deeply Nested Contexts'))
+        got = muspyche.renderer.render(parsed, context, lookup=[tmp], missing=True, newline=('\r\n' if r'\r\n' in test['desc'] else '\n'))
         ok = got == test['expected']
         if not QUIET or not ok: print('{0}: {1}'.format(('OK' if ok else 'FAIL'), title))
         for i in [x for x in os.listdir(tmp) if not x.startswith('.')]: os.remove(os.path.join(tmp, i))
@@ -113,7 +113,8 @@ for path, case in required:
         print('expected:', (repr(expected) if REPR else expected))
         print('got:', (repr(got) if REPR else got))
         print('context:', data)
-        [print(line) for line in difflib.unified_diff(expected.splitlines(), got.splitlines(), fromfile='expected', tofile='got')]
+        diff = difflib.unified_diff(expected.splitlines(), got.splitlines(), fromfile='expected', tofile='got')
+        [print(line) for line in diff]
         break
 
 

@@ -108,7 +108,7 @@ def Engine(element):
     return engine
 
 
-def render(tree, context, lookup, missing=False):
+def render(tree, context, lookup, missing=False, newline=None):
     """Renders string from raw list of nodes.
     """
     s = ''
@@ -117,4 +117,6 @@ def render(tree, context, lookup, missing=False):
         if type(el) in [Section, Inverted]: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing)
         elif type(el) is Partial: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing)
         else: s += el.render(engine=engine, context=context)
+    if newline is not None:
+        s = newline.join(s.split('\n'))
     return s

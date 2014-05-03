@@ -8,7 +8,7 @@ from . import util
 
 WARN = 0
 DEBUG = 0
-QUICKTEST = 0
+QUICKTEST = 1
 
 
 def gettag(s):
@@ -256,21 +256,46 @@ def assemble(tree):
         i += n
     return assembled
 
-def _isspace(s):
+def _isspace(s, empty=False):
     """Returns true if string contains only space (` `) characters.
     """
-    ok = True
+    ok = (True if s else empty)
     for i in s:
-        if i != ' ':
-            ok = False
-            break
+        if not ok: break
+        if i != ' ': ok = False
     return ok
+
+def _hasfrontpadding(s, only=False):
+    """Returns (bool, cut) tuple.
+    Bool is true string has front padding and cut is the index at which padding ends.
+    Padding without newline doesn't count.
+    """
+    n = s.find('\n')
+    n = (n if n != -1 else len(s)+1)
+    rn = s.find('\r\n')
+    rn = (rn if rn != -1 else len(s)+1)
+    has, cut = False, (n if n < rn else rn)
+    if cut > 0 and _isspace(s[:cut], empty=True) or cut == 0: has = True
+    if (cut == len(s)-1 and not only) or (cut > len(s)): has = False
+    return has
+
+def sreverse(s):
+    """Reverses order of characters in string.
+    """
+    s = list(s)
+    s.reverse()
+    return ''.join(s)
+
+def _hasbackpadding(s, only=False):
+    """See _hasfrontpadding().
+    """
+    return _hasfrontpadding(s=sreverse(s), only=only)
 
 def _isstandalone(tree, index):
     """Returns tuple containing information about whether given index in given tree is a standalone tag.
     Returned value is a 3-tuple: (standalone, where, cut)
 
-    - standalone: actual info about whether the index is standalone ornot,
+    - standalone: actual info about whether the index is standalone or not,
     - where: where to use cut (useful only for standlone tags),
     - cut: cut to apply to a text of item (defined by `where`, useful only for standalone tags),
     """
@@ -289,15 +314,28 @@ def _isstandalone(tree, index):
             if text[i] == '\n':
                 standalone, where, cut = True, 'next', i+1
                 break
-        if (prev._text[-1] != '\n' if prev._text else False):
-            if QUICKTEST: print('[{0}] standalone = false; (newline not in last index of preceding text node: {1})'.format(index, repr(prev._text)))
+        if not _hasbackpadding(prev._text) and not _hasfrontpadding(next._text):
             standalone = False
-        if index == 1 and _isspace(prev._text) and (next._text[0] == '\n' if next._text else False):
-            if QUICKTEST: print('[{0}] standalone = true; (node is preceded only by indentation)'.format(index))
+        if not _hasbackpadding(prev._text):
+            standalone = False
+        if not _hasfrontpadding(next._text):
+            standalone = False
+        if (tree[index].inline() if type(tree[index]) in [Section, Inverted] else True):
+            standalone = False
+        #if (prev._text[-1] != '\n' if prev._text else False) and not _hasbackpadding(prev._text): #_isspace(prev._text[prev._text.rfind('\n'):]):
+        #    if QUICKTEST: print('[{0}] standalone = false; (newline not in last index of preceding text node: {1})'.format(index, repr(prev._text)))
+        #    standalone = False
+        #if index == 1 and _isspace(prev._text) and (next._text[0] == '\n' if next._text else False):
+        #    if QUICKTEST: print('[{0}] standalone = true; (node is preceded only by indentation)'.format(index))
+        #    standalone = True
+        #    where = 'next,empty.prev'
+        #if '\n' not in prev._text and (tree[index].inline() if type(tree[index]) in [Section, Inverted] else True):
+        #    standalone = False
+        if (prev._text[-1] == '\n' if prev._text else False) and (next._text[0] == '\n' if next._text else False):
             standalone = True
-            where = 'next,empty.prev'
-        if '\n' not in prev._text and (tree[index].inline() if type(tree[index]) in [Section, Inverted] else True):
-            standalone = False
+        if _hasbackpadding(prev._text) and _hasfrontpadding(next._text):
+            standalone = True
+            where = 'both'
     elif prev is None and type(next) is TextNode:
         report += '(appears to be the first element) '
         text = next._text
@@ -343,6 +381,9 @@ def clean(tree):
                 if QUICKTEST: print(repr(next._text))
             elif where == 'empty.prev':
                 prev._text = ''
+            elif where == 'both':
+                prev._text = prev._text.rstrip() + '\n'
+                next._text = next._text.lstrip()
             else:
                 if QUICKTEST: print('next:', repr(next._text), end=' -> ')
                 next._text = next._text[cut:]

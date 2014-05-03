@@ -56,19 +56,34 @@ required = [(i, loadjson(i)) for i in required if ('comments' not in i and 'deli
 
 
 SKIP = [
-        'Indented Inline Sections',
+        'Doubled',
+        'Standalone Lines',
+
         'Indented Standalone Lines',
+        'Indented Inline Sections',
+
+
         'Standalone Line Endings',
         'Standalone Indented Lines',
         'Standalone Indentation',
+
         'Standalone Without Newline',
         'Standalone Without Previous Line',
         ]
+
 DROP = [
         'Deeply Nested Contexts',
         ]
+
 if NO_SKIP or FULL_COVERAGE: SKIP = []
 if NO_DROP or FULL_COVERAGE: DROP = []
+
+
+def dewhitespace(s):
+    """Remove all whitespace from string.
+    """
+    for i in [' ', '\r\n', '\n', '\t']: s = ''.join(s.split(i))
+    return s
 
 
 stop = False
@@ -98,7 +113,8 @@ for path, case in required:
         context = muspyche.context.ContextStack(context=test['data'], global_lookup=(test['name'] == 'Deeply Nested Contexts'))
         got = muspyche.renderer.render(parsed, context, lookup=[tmp], missing=True, newline=('\r\n' if r'\r\n' in test['desc'] else '\n'))
         ok = got == test['expected']
-        if not QUIET or not ok: print('{0}: {1}'.format(('OK' if ok else 'FAIL'), title))
+        information = (dewhitespace(got) == dewhitespace(test['expected']))
+        if not QUIET or not ok: print('{0}: {1}'.format(('OK' if ok else ('FAIL' if not information else 'FORMATTING_FAIL')), title))
         for i in [x for x in os.listdir(tmp) if not x.startswith('.')]: os.remove(os.path.join(tmp, i))
         done += 1
         passed += (1 if ok else 0)

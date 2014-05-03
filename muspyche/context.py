@@ -18,13 +18,24 @@ def parsepath(path):
     returns specifiers to follow.
     """
     parts = (path.split('.') if path else [])
+    if path == '..': parts = ['..']
     indexed = re.compile('([a-zA-Z-_]*)\[([0-9]*)\]')
+    if ['', ''] == parts[:2]:
+        parts = ['..'] + parts[2:]
+    for i, part in enumerate(parts):
+        if not part: parts[i] = '..'
     for i, part in enumerate(parts):
         if indexed.match(part) is None:
             parts[i] = (part, None)
         else:
             match = indexed.match(part)
             parts[i] = (match.group(1), int(match.group(2) if match.group(2) else 0))
+    final = []
+    for i, item in enumerate(parts):
+        part, index = item
+        if part == '..' and i > 0: final.pop(-1)
+        else: final.append( (part, index) )
+    parts = final[:]
     return parts
 
 def dumppath(parts):
@@ -93,14 +104,12 @@ class ContextStack:
     def adjust(self, path, store=True, global_lookup=False):
         """Adjusts current context.
         """
-        if path and store:
-            self._adjusts.append(path)
         if DEBUG:
             print('adjusts:', self._adjusts)
             print(' * current:', self.current())
         parts = parsepath(path)
-        if DEBUG:
-            print('parsed parts:', parts)
+        if DEBUG: print('parsed parts:', repr(path), '->', parts)
+        if parts == [('..', None)]: parts = [('::', None)] + parsepath('.'.join(self._adjusts))[:-1]
         for part, index in parts:
             if type(self._current) == bool and store: break
             if part.startswith('::'):
@@ -117,6 +126,8 @@ class ContextStack:
                 if WARN: warnings.warn('path cannot be resolved: "{0}": invalid part: {1}'.format(path, part))
                 self._current = ''
                 break
+        if path and store:
+            self._adjusts.append(path)
         self._updatestack()
         return self
 

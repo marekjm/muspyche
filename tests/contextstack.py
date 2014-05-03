@@ -113,6 +113,17 @@ class ContextStackTests(unittest.TestCase):
         stack = muspyche.context.ContextStack(context)
         self.assertEqual('OK', stack.get(s))
 
+    def testRelativeGetting(self):
+        s = 'foo.bar[0]..bar[1]'
+        context = {'foo': {'bar': {'baz': 'FAIL'}, 'baz': 'OK'}}
+        stack = muspyche.context.ContextStack(context)
+        self.assertEqual('OK', stack.get('foo.bar..baz'))
+
+    def testRelativeAdjusting(self):
+        context = {'foo': {}}
+        stack = muspyche.context.ContextStack(context)
+        self.assertEqual(context, stack.adjust('foo').adjust('..').current())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -42,11 +42,12 @@ def dumppath(parts):
 class ContextStack:
     """Object implementing context stack.
     """
-    def __init__(self, context):
+    def __init__(self, context, global_lookup=False):
         self._global, self._current = {}, {}
         self._stack = {}
         self._adjusts, self._stacks = [], []
         self._index = None
+        self._global_lookup = global_lookup
         for k, v in context.items(): self._global[k] = v
         self._toglobal()
 
@@ -110,7 +111,7 @@ class ContextStack:
                 if not part: continue
             if part in self._current:
                 self._current = (self._current[part] if index is None else self._current[part][index])
-            elif part in self._global and global_lookup:
+            elif part in self._global and (self._global_lookup or global_lookup):
                 self._current = self._global[part]
             elif part == '' and index is not None:
                 self._current = self._current[index]

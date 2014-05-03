@@ -256,13 +256,23 @@ def assemble(tree):
         i += n
     return assembled
 
+def _isspace(s):
+    """Returns true if string contains only space (` `) characters.
+    """
+    ok = True
+    for i in s:
+        if i != ' ':
+            ok = False
+            break
+    return ok
+
 def _isstandalone(tree, index):
     """Returns tuple containing information about whether given index in given tree is a standalone tag.
     Returned value is a 3-tuple: (standalone, where, cut)
 
     - standalone: actual info about whether the index is standalone ornot,
     - where: where to use cut (useful only for standlone tags),
-    - cut: cut to apply to a text of item (defined by `where`, usefulonly for standalone tags),
+    - cut: cut to apply to a text of item (defined by `where`, useful only for standalone tags),
     """
     standalone, where, cut = False, '', 0
     if type(tree[index]) not in [Section, Close, Inverted]: return (standalone, where, cut)
@@ -279,7 +289,15 @@ def _isstandalone(tree, index):
             if text[i] == '\n':
                 standalone, where, cut = True, 'next', i+1
                 break
-        if '\n' not in prev._text and (tree[index].inline() if type(tree[index]) in [Section, Inverted] else True): standalone = False
+        if (prev._text[-1] != '\n' if prev._text else False):
+            if QUICKTEST: print('[{0}] standalone = false; (newline not in last index of preceding text node: {1})'.format(index, repr(prev._text)))
+            standalone = False
+        if index == 1 and _isspace(prev._text) and (next._text[0] == '\n' if next._text else False):
+            if QUICKTEST: print('[{0}] standalone = true; (node is preceded only by indentation)'.format(index))
+            standalone = True
+            where = 'next,empty.prev'
+        if '\n' not in prev._text and (tree[index].inline() if type(tree[index]) in [Section, Inverted] else True):
+            standalone = False
     elif prev is None and type(next) is TextNode:
         report += '(appears to be the first element) '
         text = next._text
@@ -318,6 +336,13 @@ def clean(tree):
                 if QUICKTEST: print('prev:', repr(prev._text), end=' -> ')
                 prev._text = prev._text[:cut]
                 if QUICKTEST: print(repr(prev._text))
+            elif where == 'next,empty.prev':
+                if QUICKTEST: print('next (with emptying prev):', repr(next._text), end=' -> ')
+                next._text = next._text[cut:]
+                prev._text = ''
+                if QUICKTEST: print(repr(next._text))
+            elif where == 'empty.prev':
+                prev._text = ''
             else:
                 if QUICKTEST: print('next:', repr(next._text), end=' -> ')
                 next._text = next._text[cut:]
@@ -330,8 +355,7 @@ def parse(template, lookup=[], missing=True):
     curr = rawparse(template)
     final = []
     while True:
-        next = clean(curr)
-        next = assemble(next)
+        next = assemble(clean(curr))
         next = insertinjections(next, lookup)
         if curr == next:
             final = next

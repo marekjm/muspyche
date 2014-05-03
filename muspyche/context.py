@@ -46,7 +46,6 @@ class ContextStack:
         self._global, self._current = {}, {}
         self._stack = {}
         self._adjusts, self._stacks = [], []
-        self._index = None
         self._global_lookup = global_lookup
         for k, v in context.items(): self._global[k] = v
         self._toglobal()
@@ -59,7 +58,6 @@ class ContextStack:
             for i, item in enumerate(self._current):
                 context = ContextStack(self._global)
                 context._current = item
-                context._index = i
                 context._adjusts = self._adjusts
                 l.append(context)
         else:
@@ -129,7 +127,6 @@ class ContextStack:
         path = '::' + '.'.join(self._adjusts)
         if DEBUG: print('restoring to:', path)
         self.adjust(path, store=False)
-        if self._index is not None: self._current = self._current[self._index]
 
     def split(self, path):
         """Splits context access path to namespace and key.

@@ -82,7 +82,7 @@ for path, case in required:
         title = '{0}: {1}: "{2}"'.format(path, test['name'], test['desc'])
         if not QUIET: print('testing: {0}'.format(title), end='')
         parsed = muspyche.parser.parse(template=test['template'])
-        context = muspyche.context.ContextStack(context=test['data'], global_lookup=True)
+        context = muspyche.context.ContextStack(context=test['data'], global_lookup=(test['name'] == 'Deeply Nested Contexts'))
         got = muspyche.renderer.render(parsed, context, lookup=[tmp], missing=True)
         n = len(title) + len('testing: ')
         if not QUIET: print('\b'*n, end='')

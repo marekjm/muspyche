@@ -108,7 +108,7 @@ def Engine(element):
     return engine
 
 
-def render(tree, context, lookup, missing):
+def render(tree, context, lookup, missing=False):
     """Renders string from raw list of nodes.
     """
     s = ''

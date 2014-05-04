@@ -45,9 +45,6 @@ def rawparse(template):
     opened = False
     template = template.replace('\r\n', '\n')
     while i < len(template):
-        if i+3 >= len(template): # this means template cannot include even one tag so there's no need for parsing
-            text += template[i:]
-            break
         if template[i:i+2] == '{{':
             if text:
                 tree.append( TextNode(text) )
@@ -398,7 +395,7 @@ def clean(tree):
         i += 1
     return cleaned
 
-def parse(template, lookup=[], missing=True):
+def parse(template, lookup=[]):
     curr = rawparse(template)
     final = []
     while True:

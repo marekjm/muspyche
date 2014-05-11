@@ -111,7 +111,7 @@ for path, case in required:
             continue
         parsed = muspyche.parser.parse(template=test['template'])
         context = muspyche.context.ContextStack(context=test['data'], global_lookup=(test['name'] == 'Deeply Nested Contexts'))
-        got = muspyche.renderer.render(parsed, context, lookup=[tmp], missing=True, newline=('\r\n' if r'\r\n' in test['desc'] else '\n'))
+        got = muspyche.renderer.Renderer(parsed, context, lookup=[tmp], missing=True, newline=('\r\n' if r'\r\n' in test['desc'] else '\n')).render()
         ok = got == test['expected']
         information = (dewhitespace(got) == dewhitespace(test['expected']))
         if not QUIET or not ok: print('{0}: {1}'.format(('OK' if ok else ('FAIL' if not information else 'FORMATTING_FAIL')), title))

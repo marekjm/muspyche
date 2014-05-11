@@ -1,6 +1,8 @@
 """This module holds the rendering code for Muspyche.
 """
 
+import re
+
 from . import util
 from . import parser
 from .models import *
@@ -115,14 +117,53 @@ def Engine(element):
     return engine
 
 
+class Renderer:
+    """Object that will render render parsed tree.
+    """
+    def __init__(self, tree, context, lookup=[], missing=False, newline=None):
+        self._tree, self._context = tree, context
+        self._lookup, self._missing = lookup, missing
+        self._newline = newline
+        self._post = []
+
+    def addpost(self, regex, callback):
+        """Post-render callbacks are used with partials.
+        When a partial is rendered, its path is checked against regexes in post list.
+        When a match is found, rendered text is passed to the callback function and
+        returned text is stored as a rendered result.
+        One regex may have multiple callbacks; they will be run against the text in order they are found on the list.
+
+        This is useful e.g. when you have Markdown documents as partials as you can convert them to HTML.
+        """
+        self._post.append( (regex, callback) )
+        return self
+
+    def _partialPostRender(self, path, text):
+        """Applies post-renderers to a text.
+        """
+        for regex, callback in self._post:
+            if re.compile(regex).match(path): text = callback(text)
+        return text
+
+    def render(self):
+        """Renders parsed tree.
+        """
+        rendered = ''
+        for el in self._tree:
+            engine = Engine(el)
+            if type(el) in [Section, Inverted]:
+                s = el.render(engine=engine, context=self._context, lookup=self._lookup, missing=self._missing, newline=self._newline)
+            elif type(el) is Partial:
+                s = el.render(engine=engine, context=self._context, lookup=self._lookup, missing=self._missing, newline=self._newline)
+                self._partialPostRender(el.getpath(), s)
+            elif type(el) is Newline:
+                s = el.render(engine, self._newline)
+            else:
+                s = el.render(engine=engine, context=self._context)
+            rendered += s
+        return rendered
+
 def render(tree, context, lookup, missing=False, newline=None):
     """Renders string from raw list of nodes.
     """
-    s = ''
-    for el in tree:
-        engine = Engine(el)
-        if type(el) in [Section, Inverted]: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing, newline=newline)
-        elif type(el) is Partial: s += el.render(engine=engine, context=context, lookup=lookup, missing=missing, newline=newline)
-        elif type(el) is Newline: s += el.render(engine, newline)
-        else: s += el.render(engine=engine, context=context)
-    return s
+    return Renderer(tree, context, lookup, missing, newline).render()

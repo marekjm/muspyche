@@ -155,7 +155,7 @@ class Renderer:
                 s = el.render(engine=engine, context=self._context, lookup=self._lookup, missing=self._missing, newline=self._newline)
             elif type(el) is Partial:
                 s = el.render(engine=engine, context=self._context, lookup=self._lookup, missing=self._missing, newline=self._newline)
-                self._partialPostRender(el.getpath(), s)
+                s = self._partialPostRender(el.getpath(), s)
             elif type(el) is Newline:
                 s = el.render(engine, self._newline)
             else:

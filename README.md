@@ -9,58 +9,42 @@ It was forked from [Pystache](https://github.com/defunkt/pystache) library.
 ----
 
 
-### Features
+## Features
 
 Here is a quick overview of Muspyche features.
+
 
 ### Vanilla
 
 Muspyche supports great majority of vanilla Mustache features.
-The only missing one is setting non-standard delimiters and
-there are currently no plans to implement it.
+The only missing ones are:
+
+- setting non-standard delimiters (there are currently no plans to implement this),
+- context stack gathering for nested sections,
+
+This implementation also slightly differs from what the standard says in regard to looping to
+global context. By default it will not visit global namespace if a name is not found in current
+namespace (but this can be changed with optional options).
+
 
 ### Extensions
 
 Muspyche supports few extensions of Mustache (which are features of Mustache 2.0).
 
-**Access to fields in context using dot-notation**
-
-With Muspyche it is possible to use nested dictionaries in context and
-access their values using familiar dot-notation.
-
-Consider this context:
-
-```
-{
-    "foo": {
-        "bar": "Hello World!"
-    }
-}
-```
-
-Using this context, the following template...
-
-```
-{{foo.bar}}
-```
-
-... would render as `Hello World!`.
-
-----
 
 **Global context access**
 
 This extension lets template writers access global context from whatever place in their templates they want.
 Using global context for variable resolution is indicated by placing to colons - `::` - before the variable key.
 
-Global context extension can be combined with dot-notation extension; however, only the first key can be preceded by
-global-context indicator.
+
+**Injections**
+
+Using special syntax `{{<inject:subsection}}` it is possible to create customized partials.
+Read more about injections in `doc/` directory.
 
 
----
-
-
-**Written for Python 3**
+### Written for Python 3
 
 Muspche was started after the release of Python 3.4 (in April, 2014).
 This means that by default the language grants it two things that are
@@ -75,9 +59,9 @@ in Python 2.x.
 
 ----
 
-### License
+## License
 
-Muspyche is licensed under GNU GPL v3 or GNU LGPL v3.
+Muspyche is licensed under GNU GPL v3 or GNU LGPL v3 (or any later version of chosen license).
 
 The choice of the license under which to use the library
 is left to the User.

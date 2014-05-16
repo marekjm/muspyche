@@ -25,7 +25,7 @@ context for `main`: `{"string": "Hello World!"}`
 Template `main` is being parsed.  
 Expected outcome:
 
-- as a dumped template, with the unnecessary whitespace not stripped):
+- as a dumped template, with the unnecessary whitespace not stripped:
 
 ```
 #!/usr/bin/python3
@@ -42,6 +42,3 @@ print(" {{string}} ")
 print(" Hello World! ")
 
 ```
-
-
-

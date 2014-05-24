@@ -1,6 +1,6 @@
 PYTHON_VERSION=3.4
 PYTHON_SITEPKGS_LOCAL=~/.local/lib/python${PYTHON_VERSION}/site-packages
-BINDIR=~/.local/bin/
+BINDIR=~/.local/bin
 
 .PHONY: tests tests-specs tests-contextstack
 

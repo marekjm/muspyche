@@ -12,7 +12,8 @@ install: install-bin
 
 
 install-lib:
-	@cp -Rv ./muspyche ${PYTHON_SITEPKGS_LOCAL}
+	mkdir -p ${PYTHON_SITEPKGS_LOCAL}/muspyche
+	@cp -v ./muspyche/*.py ${PYTHON_SITEPKGS_LOCAL}/muspyche
 
 
 install-bin-only:

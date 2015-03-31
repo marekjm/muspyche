@@ -7,6 +7,8 @@ before trying to pass spec tests.
 But let us put *result correctness over code correctness* and
 first focus on passing the tests.
 
+- move context-accessing code (advanced parts like `acc.ess::path[0].to..some[1].element`) to a different library,
+- implement stand-aloneness detection,
 - improve in-code documentation,
 - add `manual/` directory, write manuals for Muspyche and place 'em there,
 - add *context lookup* feature for partials (can use the same lookup paths and resolution methods as partial resolving code),
@@ -29,7 +31,6 @@ first focus on passing the tests.
 
 ### Mustache 2.0 features
 
-- implement access to global scope (partly finished, is supported for variables inside sections, maybe for other elements),
 - implement *else* notation (section-inverted-close),
 
 
@@ -37,13 +38,18 @@ first focus on passing the tests.
 
 ### Extended features
 
+#### Context grabs
 
-----
+Basic syntax: `@muspyche.grab(modifier=value,):path/file.json`
 
-### Already achievable tricks that may get dedicated syntax (i.e. become features)
+**Modifiers**:
 
-**Negated variables**
+- `type`*`=dict`*: *list*: defines type of element the string will be substituted with,
+- `match`*`=glob`*: *regex*, *none*: defines method used to match names,
+- `naming`*`=file`*: *full*, *no*: defines method used to match names,
+- `append`*`=<name>`*: defines name of the element to which grabbed data should be appended,
 
-- implement negated variables (`{{~foo}} Some code {{/foo}}`) -- there already is a way to achieve this:
-  inerts get single dict as input will parse just once with this dict as context so these two pieces of code
-  yield the same result in rendered document: `{{~foo}} Some code {{/foo}}` (proposed) and `{{^foo}} Some code {{/foo}}` (implemented in Mustache 1.0).
+Appending rules:
+
+- if the *grab* is top-level, it becomes top-level element;
+- if the string is in a list, it is removed from it and the resulting element is inserted in its place;
